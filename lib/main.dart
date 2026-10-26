@@ -26,7 +26,11 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
   bool _isFillMode = false;
-  bool _isMuted = false; // Audio Mute/Unmute state
+  bool _isMuted = false;
+
+  // Trimming variables
+  RangeValues _trimRange = const RangeValues(0, 1);
+  Duration _videoTotalDuration = Duration.zero;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -42,17 +46,20 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       if (isVideo) {
         final controller = VideoPlayerController.file(File(picked.path));
         await controller.initialize();
-        controller.setLooping(true);
-        controller.play();
-        controller.addListener(() {
-          if (mounted) setState(() {});
-        });
+        controller.setLooping(false);
+
+        final totalMs = controller.value.duration.inMilliseconds.toDouble();
         setState(() {
           _selectedFile = File(picked.path);
           _isVideo = true;
           _videoController = controller;
           _isMuted = false;
+          _videoTotalDuration = controller.value.duration;
+          _trimRange = RangeValues(0.0, totalMs > 0 ? totalMs : 1.0);
         });
+
+        controller.addListener(_videoListener);
+        controller.play();
       } else {
         setState(() {
           _selectedFile = File(picked.path);
@@ -60,6 +67,19 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         });
       }
     }
+  }
+
+  void _videoListener() {
+    if (!mounted || _videoController == null) return;
+    final currentMs = _videoController!.value.position.inMilliseconds.toDouble();
+
+    // Loop within trimmed boundary
+    if (currentMs >= _trimRange.end) {
+      _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
+    } else if (currentMs < _trimRange.start) {
+      _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
+    }
+    setState(() {});
   }
 
   void _toggleMute() {
@@ -70,7 +90,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     });
   }
 
-  String _formatDuration(Duration duration) {
+  String _formatDurationMs(double ms) {
+    final duration = Duration(milliseconds: ms.toInt());
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
@@ -131,14 +152,14 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   @override
   void dispose() {
+    _videoController?.removeListener(_videoListener);
     _videoController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final videoPos = _videoController?.value.position ?? Duration.zero;
-    final videoDur = _videoController?.value.duration ?? Duration.zero;
+    final totalMs = _videoTotalDuration.inMilliseconds.toDouble();
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -291,40 +312,46 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             ),
             if (_isVideo &&
                 _videoController != null &&
-                _videoController!.value.isInitialized)
+                _videoController!.value.isInitialized &&
+                totalMs > 0)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Column(
                   children: [
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 3,
-                        thumbShape:
-                            const RoundSliderThumbShape(enabledThumbRadius: 6),
-                      ),
-                      child: Slider(
-                        value: videoPos.inMilliseconds
-                            .toDouble()
-                            .clamp(0.0, videoDur.inMilliseconds.toDouble()),
-                        max: videoDur.inMilliseconds.toDouble(),
-                        activeColor: Colors.greenAccent,
-                        inactiveColor: Colors.white24,
-                        onChanged: (val) {
-                          _videoController!
-                              .seekTo(Duration(milliseconds: val.toInt()));
-                        },
-                      ),
-                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_formatDuration(videoPos),
+                        Text('Start: ${_formatDurationMs(_trimRange.start)}',
+                            style: const TextStyle(
+                                color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+                        Text('Selected: ${_formatDurationMs(_trimRange.end - _trimRange.start)}',
                             style: const TextStyle(
                                 color: Colors.white70, fontSize: 12)),
-                        Text(_formatDuration(videoDur),
+                        Text('End: ${_formatDurationMs(_trimRange.end)}',
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 12)),
+                                color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
                       ],
+                    ),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 4,
+                        rangeThumbShape:
+                            const RoundRangeSliderThumbShape(enabledThumbRadius: 7),
+                      ),
+                      child: RangeSlider(
+                        values: _trimRange,
+                        min: 0.0,
+                        max: totalMs,
+                        activeColor: Colors.greenAccent,
+                        inactiveColor: Colors.white24,
+                        onChanged: (RangeValues values) {
+                          setState(() {
+                            _trimRange = values;
+                          });
+                          _videoController!.seekTo(
+                              Duration(milliseconds: values.start.toInt()));
+                        },
+                      ),
                     ),
                   ],
                 ),
