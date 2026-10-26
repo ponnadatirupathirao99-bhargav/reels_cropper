@@ -25,7 +25,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   VideoPlayerController? _videoController;
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
-  bool _isFillMode = false; // Default ga Horizontal video mottham kanipinchela (Fit mode)
+  bool _isFillMode = false;
+  bool _isMuted = false; // Audio Mute/Unmute state
 
   final ImagePicker _picker = ImagePicker();
 
@@ -50,6 +51,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           _selectedFile = File(picked.path);
           _isVideo = true;
           _videoController = controller;
+          _isMuted = false;
         });
       } else {
         setState(() {
@@ -58,6 +60,14 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         });
       }
     }
+  }
+
+  void _toggleMute() {
+    if (_videoController == null) return;
+    setState(() {
+      _isMuted = !_isMuted;
+      _videoController!.setVolume(_isMuted ? 0.0 : 1.0);
+    });
   }
 
   String _formatDuration(Duration duration) {
@@ -138,7 +148,15 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         backgroundColor: Colors.black,
         centerTitle: true,
         actions: [
-          if (_isVideo && _videoController != null)
+          if (_isVideo && _videoController != null) ...[
+            IconButton(
+              icon: Icon(
+                _isMuted ? Icons.volume_off : Icons.volume_up,
+                color: _isMuted ? Colors.redAccent : Colors.greenAccent,
+              ),
+              tooltip: _isMuted ? 'Unmute' : 'Mute',
+              onPressed: _toggleMute,
+            ),
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: TextButton.icon(
@@ -155,6 +173,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                 },
               ),
             ),
+          ],
         ],
       ),
       body: SafeArea(
