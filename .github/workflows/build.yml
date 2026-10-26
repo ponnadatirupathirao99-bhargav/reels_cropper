@@ -24,9 +24,12 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Install Dependencies
+      - name: Setup Project and Dependencies
         run: |
-          flutter pub get
+          cp lib/main.dart /tmp/saved_main.dart
+          flutter create --org com.reels.cropper --overwrite .
+          flutter pub add image_picker image_cropper gal
+          cp /tmp/saved_main.dart lib/main.dart
 
       - name: Build Release APK
         run: flutter build apk --release
