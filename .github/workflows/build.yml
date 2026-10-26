@@ -28,11 +28,11 @@ jobs:
         run: |
           cp lib/main.dart saved_main.dart
           flutter create --org com.reels.cropper --overwrite .
-          flutter pub add image_picker image_cropper gal
+          flutter pub add image_picker gal path_provider
           cp saved_main.dart lib/main.dart
 
       - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
