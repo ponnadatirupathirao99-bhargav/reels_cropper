@@ -30,10 +30,6 @@ jobs:
           flutter create --org com.reels.cropper --overwrite .
           flutter pub add image_picker gal path_provider video_player
           cp saved_main.dart lib/main.dart
-          
-          # Android minSdkVersion 21 à°•à°¿ à°¸à±†à°Ÿà± à°šà±‡à°¯à°¡à°‚ (video_player à°•à±‹à°¸à°‚)
-          sed -i 's/minSdkVersion = flutter.minSdkVersion/minSdkVersion = 21/g' android/app/build.gradle || true
-          sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle || true
 
       - name: Build Release APK
         run: flutter build apk --release
