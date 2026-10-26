@@ -53,7 +53,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('9:16 à°°à±€à°²à± à°«à±‹à°Ÿà±‹ à°—à±à°¯à°¾à°²à°°à±€à°²à±‹ à°¸à±‡à°µà± à°…à°¯à±à°¯à°¿à°‚à°¦à°¿! ðŸŽ‰'),
+            content: Text('Saved 9:16 Reel to Gallery! ðŸŽ‰'),
             backgroundColor: Colors.green,
           ),
         );
@@ -62,7 +62,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('à°Žà°°à±à°°à°°à±: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -102,7 +102,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                             children: [
                               Icon(Icons.add_photo_alternate, size: 60, color: Colors.white70),
                               SizedBox(height: 12),
-                              Text('à°«à±‹à°Ÿà±‹ à°¸à±†à°²à±†à°•à±à°Ÿà± à°šà±‡à°¸à±à°•à±‹à°‚à°¡à°¿', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                              Text('Select Photo', style: TextStyle(color: Colors.white70, fontSize: 16)),
                             ],
                           ),
                         ),
@@ -140,7 +140,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       ),
                       onPressed: _pickImage,
                       icon: const Icon(Icons.photo_library),
-                      label: const Text('à°®à°¾à°°à±à°šà±'),
+                      label: const Text('Change'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -155,7 +155,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       icon: _isSaving
                           ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.check_circle),
-                      label: Text(_isSaving ? 'à°¸à±‡à°µà± à°…à°µà±à°¤à±‹à°‚à°¦à°¿...' : '9:16 à°¸à±‡à°µà± à°šà±‡à°¯à°¿',
+                      label: Text(_isSaving ? 'Saving...' : 'Save 9:16',
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
