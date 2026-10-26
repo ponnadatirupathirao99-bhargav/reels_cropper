@@ -25,6 +25,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   VideoPlayerController? _videoController;
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
+  bool _isFillMode = true; // Horizontal video fill or fit toggle
 
   final ImagePicker _picker = ImagePicker();
 
@@ -42,6 +43,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         await controller.initialize();
         controller.setLooping(true);
         controller.play();
+        controller.addListener(() {
+          if (mounted) setState(() {});
+        });
         setState(() {
           _selectedFile = File(picked.path);
           _isVideo = true;
@@ -56,6 +60,13 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     }
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
   Future<void> _saveMedia() async {
     if (_selectedFile == null) return;
     setState(() => _isSaving = true);
@@ -66,7 +77,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Video saved to Gallery! ðŸŽ¬'),
+              content: Text('Video saved to Gallery! 🎬'),
               backgroundColor: Colors.green,
             ),
           );
@@ -88,7 +99,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Saved 9:16 Reel Photo to Gallery! ðŸŽ‰'),
+              content: Text('Saved 9:16 Reel Photo to Gallery! 🎉'),
               backgroundColor: Colors.green,
             ),
           );
@@ -116,6 +127,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final videoPos = _videoController?.value.position ?? Duration.zero;
+    final videoDur = _videoController?.value.duration ?? Duration.zero;
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -123,6 +137,21 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.black,
         centerTitle: true,
+        actions: [
+          if (_isVideo && _videoController != null)
+            IconButton(
+              icon: Icon(
+                _isFillMode ? Icons.fullscreen_exit : Icons.fullscreen,
+                color: Colors.greenAccent,
+              ),
+              tooltip: _isFillMode ? 'Fit Video' : 'Fill 9:16',
+              onPressed: () {
+                setState(() {
+                  _isFillMode = !_isFillMode;
+                });
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -175,16 +204,48 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                               child: _isVideo
                                   ? (_videoController != null &&
                                           _videoController!.value.isInitialized
-                                      ? FittedBox(
-                                          fit: BoxFit.cover,
-                                          clipBehavior: Clip.hardEdge,
-                                          child: SizedBox(
-                                            width: _videoController!
-                                                .value.size.width,
-                                            height: _videoController!
-                                                .value.size.height,
-                                            child: VideoPlayer(
-                                                _videoController!),
+                                      ? GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _videoController!.value.isPlaying
+                                                  ? _videoController!.pause()
+                                                  : _videoController!.play();
+                                            });
+                                          },
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              FittedBox(
+                                                fit: _isFillMode
+                                                    ? BoxFit.cover
+                                                    : BoxFit.contain,
+                                                clipBehavior: Clip.hardEdge,
+                                                child: SizedBox(
+                                                  width: _videoController!
+                                                      .value.size.width,
+                                                  height: _videoController!
+                                                      .value.size.height,
+                                                  child: VideoPlayer(
+                                                      _videoController!),
+                                                ),
+                                              ),
+                                              if (!_videoController!
+                                                  .value.isPlaying)
+                                                Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black45,
+                                                    borderRadius:
+                                                        BorderRadius.circular(30),
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.all(12),
+                                                  child: const Icon(
+                                                    Icons.play_arrow,
+                                                    size: 40,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         )
                                       : const Center(
@@ -203,6 +264,46 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       ),
               ),
             ),
+            if (_isVideo &&
+                _videoController != null &&
+                _videoController!.value.isInitialized)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 3,
+                        thumbShape:
+                            const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: videoPos.inMilliseconds
+                            .toDouble()
+                            .clamp(0.0, videoDur.inMilliseconds.toDouble()),
+                        max: videoDur.inMilliseconds.toDouble(),
+                        activeColor: Colors.greenAccent,
+                        inactiveColor: Colors.white24,
+                        onChanged: (val) {
+                          _videoController!
+                              .seekTo(Duration(milliseconds: val.toInt()));
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_formatDuration(videoPos),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                        Text(_formatDuration(videoDur),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
