@@ -31,6 +31,9 @@ jobs:
           flutter pub add image_picker gal path_provider video_player
           cp saved_main.dart lib/main.dart
 
+          # à°¯à°¾à°ªà± à°ªà±‡à°°à±à°¨à± 'Reels Cropper' à°—à°¾ à°®à°¾à°°à±à°šà°¡à°‚
+          sed -i 's/android:label="reels_cropper"/android:label="Reels Cropper"/g' android/app/src/main/AndroidManifest.xml || true
+
       - name: Build Release APK
         run: flutter build apk --release
 
