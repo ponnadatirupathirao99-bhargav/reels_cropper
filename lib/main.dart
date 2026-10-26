@@ -9,8 +9,93 @@ import 'package:video_player/video_player.dart';
 
 void main() => runApp(const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ReelsCropperScreen(),
+      home: SplashScreen(),
     ));
+
+// Custom Dark Splash Screen
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ReelsCropperScreen()),
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF121212),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFF00FFA3), width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00FFA3).withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.crop_portrait_rounded,
+                size: 55,
+                color: Color(0xFF00FFA3),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Reels Cropper',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Convert to 9:16 Vertical HD',
+              style: TextStyle(
+                color: Colors.white54,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 36),
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: Color(0xFF00FFA3),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class ReelsCropperScreen extends StatefulWidget {
   const ReelsCropperScreen({super.key});
@@ -73,7 +158,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     if (!mounted || _videoController == null) return;
     final currentMs = _videoController!.value.position.inMilliseconds.toDouble();
 
-    // Loop within trimmed boundary
     if (currentMs >= _trimRange.end) {
       _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
     } else if (currentMs < _trimRange.start) {
@@ -173,7 +257,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             IconButton(
               icon: Icon(
                 _isMuted ? Icons.volume_off : Icons.volume_up,
-                color: _isMuted ? Colors.redAccent : Colors.greenAccent,
+                color: _isMuted ? Colors.redAccent : const Color(0xFF00FFA3),
               ),
               tooltip: _isMuted ? 'Unmute' : 'Mute',
               onPressed: _toggleMute,
@@ -183,7 +267,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               child: TextButton.icon(
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white12,
-                  foregroundColor: Colors.greenAccent,
+                  foregroundColor: const Color(0xFF00FFA3),
                 ),
                 icon: Icon(_isFillMode ? Icons.fit_screen : Icons.crop_free),
                 label: Text(_isFillMode ? 'Fit Video' : 'Fill Screen'),
@@ -228,7 +312,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                             const SizedBox(height: 10),
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.greenAccent,
+                                  backgroundColor: const Color(0xFF00FFA3),
                                   foregroundColor: Colors.black),
                               onPressed: () => _pickMedia(true),
                               icon: const Icon(Icons.videocam),
@@ -323,13 +407,17 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       children: [
                         Text('Start: ${_formatDurationMs(_trimRange.start)}',
                             style: const TextStyle(
-                                color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+                                color: Color(0xFF00FFA3),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
                         Text('Selected: ${_formatDurationMs(_trimRange.end - _trimRange.start)}',
                             style: const TextStyle(
                                 color: Colors.white70, fontSize: 12)),
                         Text('End: ${_formatDurationMs(_trimRange.end)}',
                             style: const TextStyle(
-                                color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.w600)),
+                                color: Colors.redAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600)),
                       ],
                     ),
                     SliderTheme(
@@ -342,7 +430,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         values: _trimRange,
                         min: 0.0,
                         max: totalMs,
-                        activeColor: Colors.greenAccent,
+                        activeColor: const Color(0xFF00FFA3),
                         inactiveColor: Colors.white24,
                         onChanged: (RangeValues values) {
                           setState(() {
@@ -386,7 +474,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                               ),
                               ListTile(
                                 leading: const Icon(Icons.video_collection,
-                                    color: Colors.greenAccent),
+                                    color: Color(0xFF00FFA3)),
                                 title: const Text('Choose Video',
                                     style: TextStyle(color: Colors.white)),
                                 onTap: () {
@@ -406,7 +494,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                   Expanded(
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
+                        backgroundColor: const Color(0xFF00FFA3),
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
