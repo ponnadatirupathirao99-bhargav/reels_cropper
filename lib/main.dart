@@ -25,7 +25,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   VideoPlayerController? _videoController;
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
-  bool _isFillMode = true; // Horizontal video fill or fit toggle
+  bool _isFillMode = false; // Default ga Horizontal video mottham kanipinchela (Fit mode) pettam
 
   final ImagePicker _picker = ImagePicker();
 
@@ -139,17 +139,21 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         centerTitle: true,
         actions: [
           if (_isVideo && _videoController != null)
-            IconButton(
-              icon: Icon(
-                _isFillMode ? Icons.fullscreen_exit : Icons.fullscreen,
-                color: Colors.greenAccent,
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white12,
+                  foregroundColor: Colors.greenAccent,
+                ),
+                icon: Icon(_isFillMode ? Icons.fit_screen : Icons.crop_free),
+                label: Text(_isFillMode ? 'Fit Video' : 'Fill Screen'),
+                onPressed: () {
+                  setState(() {
+                    _isFillMode = !_isFillMode;
+                  });
+                },
               ),
-              tooltip: _isFillMode ? 'Fit Video' : 'Fill 9:16',
-              onPressed: () {
-                setState(() {
-                  _isFillMode = !_isFillMode;
-                });
-              },
             ),
         ],
       ),
@@ -215,18 +219,20 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                           child: Stack(
                                             alignment: Alignment.center,
                                             children: [
-                                              FittedBox(
-                                                fit: _isFillMode
-                                                    ? BoxFit.cover
-                                                    : BoxFit.contain,
-                                                clipBehavior: Clip.hardEdge,
-                                                child: SizedBox(
-                                                  width: _videoController!
-                                                      .value.size.width,
-                                                  height: _videoController!
-                                                      .value.size.height,
-                                                  child: VideoPlayer(
-                                                      _videoController!),
+                                              Center(
+                                                child: FittedBox(
+                                                  fit: _isFillMode
+                                                      ? BoxFit.cover
+                                                      : BoxFit.contain,
+                                                  clipBehavior: Clip.hardEdge,
+                                                  child: SizedBox(
+                                                    width: _videoController!
+                                                        .value.size.width,
+                                                    height: _videoController!
+                                                        .value.size.height,
+                                                    child: VideoPlayer(
+                                                        _videoController!),
+                                                  ),
                                                 ),
                                               ),
                                               if (!_videoController!
@@ -268,7 +274,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                 _videoController != null &&
                 _videoController!.value.isInitialized)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Column(
                   children: [
                     SliderTheme(
@@ -313,4 +319,71 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white38),
-                        padding: const EdgeInsets.symmetric(vertical: 14
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.grey[900],
+                          builder: (ctx) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo,
+                                    color: Colors.white),
+                                title: const Text('Choose Photo',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(false);
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.video_collection,
+                                    color: Colors.greenAccent),
+                                title: const Text('Choose Video',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(true);
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.change_circle_outlined),
+                      label: const Text('Change'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: (_selectedFile != null && !_isSaving)
+                          ? _saveMedia
+                          : null,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.black))
+                          : const Icon(Icons.check_circle),
+                      label: Text(_isSaving ? 'Saving...' : 'Save 9:16',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
