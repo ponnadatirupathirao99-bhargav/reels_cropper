@@ -25,7 +25,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   VideoPlayerController? _videoController;
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
-  bool _isFillMode = false; // Default ga Horizontal video mottham kanipinchela (Fit mode) pettam
+  bool _isFillMode = false; // Default ga Horizontal video mottham kanipinchela (Fit mode)
 
   final ImagePicker _picker = ImagePicker();
 
