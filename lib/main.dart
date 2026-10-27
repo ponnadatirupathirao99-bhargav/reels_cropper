@@ -258,6 +258,112 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     });
   }
 
+  void _handleSplitAtCurrentPosition() {
+    if (_videoController == null) return;
+    final double currentMs = _videoController!.value.position.inMilliseconds.toDouble();
+
+    if (currentMs <= _trimRange.start || currentMs >= _trimRange.end) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ప్లేహెడ్‌ను ట్రిమ్ పరిధి మధ్యలో ఉంచి స్ప్లిట్ చేయండి.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.content_cut_rounded, color: Color(0xFF00FFA3)),
+                const SizedBox(width: 8),
+                Text(
+                  'Split at ${_formatDurationPrecise(currentMs)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ఏ భాగాన్ని ఉంచాలనుకుంటున్నారో ఎంచుకోండి:',
+              style: TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white12,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _trimRange = RangeValues(_trimRange.start, currentMs);
+                      });
+                      _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('మొదటి భాగం ఉంచబడింది (Keep Left) ✂️'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Keep Left'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00FFA3),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _trimRange = RangeValues(currentMs, _trimRange.end);
+                      });
+                      _videoController!.seekTo(Duration(milliseconds: currentMs.toInt()));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('తర్వాతి భాగం ఉంచబడింది (Keep Right) ✂️'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_forward),
+                    label: const Text('Keep Right', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showVolumeDialog() {
     double tempVolume = _currentVolume;
     showModalBottomSheet(
@@ -1414,19 +1520,19 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       icon: Icons.content_cut_rounded,
                       label: 'Split',
                       color: const Color(0xFF00FFA3),
-                      onTap: () {
-                        if (_videoController != null) {
-                          final cur = _videoController!.value.position.inMilliseconds.toDouble();
-                          setState(() {
-                            _trimRange = RangeValues(cur, _trimRange.end);
-                          });
-                        }
-                      },
+                      onTap: _handleSplitAtCurrentPosition,
                     ),
                     _buildBottomActionButton(
                       icon: Icons.tune_rounded,
                       label: 'Trim',
-                      onTap: () {},
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('ఎల్లో కలర్ వీడియో ట్రాక్ స్లైడర్‌ను లాగి ట్రిమ్ చేయండి.'),
+                            backgroundColor: Colors.white24,
+                          ),
+                        );
+                      },
                     ),
                     _buildBottomActionButton(
                       icon: Icons.speed_rounded,
