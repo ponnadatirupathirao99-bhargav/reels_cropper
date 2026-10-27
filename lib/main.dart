@@ -109,6 +109,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isSaving = false;
   bool _isFillMode = false;
   bool _isMuted = false;
+  bool _isBlurBackground = true; // Blur Background toggle state
 
   // Timeline & Trimming variables
   RangeValues _trimRange = const RangeValues(0, 1);
@@ -263,31 +264,46 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         backgroundColor: Colors.black,
         centerTitle: true,
         actions: [
-          if (_isVideo && _videoController != null) ...[
+          if (_selectedFile != null) ...[
+            // Blur Background Toggle Icon
             IconButton(
               icon: Icon(
-                _isMuted ? Icons.volume_off : Icons.volume_up,
-                color: _isMuted ? Colors.redAccent : const Color(0xFF00FFA3),
+                _isBlurBackground ? Icons.blur_on : Icons.blur_off,
+                color: _isBlurBackground ? const Color(0xFF00FFA3) : Colors.white38,
               ),
-              tooltip: _isMuted ? 'Unmute' : 'Mute',
-              onPressed: _toggleMute,
+              tooltip: _isBlurBackground ? 'Blur Background ON' : 'Blur Background OFF',
+              onPressed: () {
+                setState(() {
+                  _isBlurBackground = !_isBlurBackground;
+                });
+              },
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white12,
-                  foregroundColor: const Color(0xFF00FFA3),
+            if (_isVideo && _videoController != null) ...[
+              IconButton(
+                icon: Icon(
+                  _isMuted ? Icons.volume_off : Icons.volume_up,
+                  color: _isMuted ? Colors.redAccent : const Color(0xFF00FFA3),
                 ),
-                icon: Icon(_isFillMode ? Icons.fit_screen : Icons.crop_free),
-                label: Text(_isFillMode ? 'Fit Video' : 'Fill Screen'),
-                onPressed: () {
-                  setState(() {
-                    _isFillMode = !_isFillMode;
-                  });
-                },
+                tooltip: _isMuted ? 'Unmute' : 'Mute',
+                onPressed: _toggleMute,
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white12,
+                    foregroundColor: const Color(0xFF00FFA3),
+                  ),
+                  icon: Icon(_isFillMode ? Icons.fit_screen : Icons.crop_free),
+                  label: Text(_isFillMode ? 'Fit Video' : 'Fill Screen'),
+                  onPressed: () {
+                    setState(() {
+                      _isFillMode = !_isFillMode;
+                    });
+                  },
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -339,59 +355,93 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                             aspectRatio: 9 / 16,
                             child: Container(
                               color: Colors.black,
-                              child: _isVideo
-                                  ? (_videoController != null &&
-                                          _videoController!.value.isInitialized
-                                      ? GestureDetector(
-                                          onTap: _togglePlayPause,
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Center(
-                                                child: FittedBox(
-                                                  fit: _isFillMode
-                                                      ? BoxFit.cover
-                                                      : BoxFit.contain,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // 1. BLURRED BACKGROUND LAYER
+                                  if (_isBlurBackground && !_isFillMode) ...[
+                                    Positioned.fill(
+                                      child: _isVideo
+                                          ? (_videoController != null &&
+                                                  _videoController!.value.isInitialized
+                                              ? FittedBox(
+                                                  fit: BoxFit.cover,
                                                   clipBehavior: Clip.hardEdge,
                                                   child: SizedBox(
-                                                    width: _videoController!
-                                                        .value.size.width,
-                                                    height: _videoController!
-                                                        .value.size.height,
-                                                    child: VideoPlayer(
-                                                        _videoController!),
+                                                    width: _videoController!.value.size.width,
+                                                    height: _videoController!.value.size.height,
+                                                    child: VideoPlayer(_videoController!),
                                                   ),
-                                                ),
-                                              ),
-                                              if (!_videoController!
-                                                  .value.isPlaying)
-                                                Container(
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black45,
-                                                    borderRadius:
-                                                        BorderRadius.circular(30),
-                                                  ),
-                                                  padding:
-                                                      const EdgeInsets.all(12),
-                                                  child: const Icon(
-                                                    Icons.play_arrow,
-                                                    size: 40,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                        )
-                                      : const Center(
-                                          child: CircularProgressIndicator()))
-                                  : InteractiveViewer(
-                                      clipBehavior: Clip.hardEdge,
-                                      boundaryMargin: const EdgeInsets.all(200),
-                                      minScale: 0.2,
-                                      maxScale: 5.0,
-                                      child: Image.file(_selectedFile!,
-                                          fit: BoxFit.contain),
+                                                )
+                                              : Container(color: Colors.black))
+                                          : Image.file(_selectedFile!, fit: BoxFit.cover),
                                     ),
+                                    Positioned.fill(
+                                      child: BackdropFilter(
+                                        filter: ui.ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.35),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+
+                                  // 2. FOREGROUND MEDIA PLAYER LAYER
+                                  _isVideo
+                                      ? (_videoController != null &&
+                                              _videoController!.value.isInitialized
+                                          ? GestureDetector(
+                                              onTap: _togglePlayPause,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Center(
+                                                    child: FittedBox(
+                                                      fit: _isFillMode
+                                                          ? BoxFit.cover
+                                                          : BoxFit.contain,
+                                                      clipBehavior: Clip.hardEdge,
+                                                      child: SizedBox(
+                                                        width: _videoController!
+                                                            .value.size.width,
+                                                        height: _videoController!
+                                                            .value.size.height,
+                                                        child: VideoPlayer(
+                                                            _videoController!),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (!_videoController!
+                                                      .value.isPlaying)
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.black54,
+                                                        borderRadius:
+                                                            BorderRadius.circular(30),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.all(12),
+                                                      child: const Icon(
+                                                        Icons.play_arrow,
+                                                        size: 40,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            )
+                                          : const Center(
+                                              child: CircularProgressIndicator()))
+                                      : InteractiveViewer(
+                                          clipBehavior: Clip.hardEdge,
+                                          boundaryMargin: const EdgeInsets.all(200),
+                                          minScale: 0.2,
+                                          maxScale: 5.0,
+                                          child: Image.file(_selectedFile!,
+                                              fit: BoxFit.contain),
+                                        ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -414,7 +464,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Row 1: Play/Pause button + Current Position Tracker
                     Row(
                       children: [
                         InkWell(
@@ -464,8 +513,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-
-                    // Row 2: RangeSlider for Trim Start & End
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
                         trackHeight: 5,
@@ -489,8 +536,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         },
                       ),
                     ),
-
-                    // Row 3: Start Time & End Time labels
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
