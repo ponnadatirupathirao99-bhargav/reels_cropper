@@ -12,7 +12,6 @@ void main() => runApp(const MaterialApp(
       home: SplashScreen(),
     ));
 
-// Custom Dark Splash Screen
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -111,7 +110,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isMuted = false;
   bool _isBlurBackground = true;
 
-  // Timeline, Trimming & Speed variables
   RangeValues _trimRange = const RangeValues(0, 1);
   Duration _videoTotalDuration = Duration.zero;
   double _currentSpeed = 1.0;
@@ -159,7 +157,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     if (!mounted || _videoController == null) return;
     final currentMs = _videoController!.value.position.inMilliseconds.toDouble();
 
-    // Loop within trimmed boundary
     if (currentMs >= _trimRange.end) {
       _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
     } else if (currentMs < _trimRange.start) {
@@ -368,7 +365,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  // 1. BLURRED BACKGROUND LAYER
                                   if (_isBlurBackground && !_isFillMode) ...[
                                     Positioned.fill(
                                       child: _isVideo
@@ -395,8 +391,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                       ),
                                     ),
                                   ],
-
-                                  // 2. FOREGROUND MEDIA PLAYER LAYER
                                   _isVideo
                                       ? (_videoController != null &&
                                               _videoController!.value.isInitialized
@@ -459,7 +453,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               ),
             ),
 
-            // ADVANCED TIMELINE & SPEED CONTROLS PANEL
             if (_isVideo &&
                 _videoController != null &&
                 _videoController!.value.isInitialized &&
@@ -474,7 +467,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                 ),
                 child: Column(
                   children: [
-                    // Row 1: Play/Pause, Position, Speed Chips
                     Row(
                       children: [
                         InkWell(
@@ -502,12 +494,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            fontFeatures: [FontFeature.tabularFigures()],
                           ),
                         ),
                         const Spacer(),
-
-                        // Speed Chips (0.5x, 1x, 1.5x, 2x)
                         Row(
                           children: _speedOptions.map((speed) {
                             final isSelected = _currentSpeed == speed;
@@ -523,33 +512,4 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                     color: isSelected
                                         ? const Color(0xFF00FFA3)
                                         : Colors.white10,
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    '${speed}x',
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? Colors.black
-                                          : Colors.white70,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Row 2: RangeSlider
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 5,
-                        activeTrackColor: const Color(0xFF00FFA3),
-                        inactiveTrackColor: Colors.white12,
-                        rangeThumbShape:
-                            const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
-                        thumbColor: const Color(
+                                    borderRadius: BorderRadius.circular(6
