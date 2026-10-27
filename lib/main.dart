@@ -103,9 +103,14 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isMuted = false;
   bool _isBlurBackground = true;
 
+  // Timeline, Trimming & Speed
   RangeValues _trimRange = const RangeValues(0, 1);
   Duration _videoTotalDuration = Duration.zero;
   double _currentSpeed = 1.0;
+
+  // Text Overlay Variables
+  String _overlayText = '';
+  Offset _textPosition = const Offset(20, 40);
 
   final ImagePicker _picker = ImagePicker();
 
@@ -180,6 +185,53 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       _currentSpeed = speed;
       _videoController!.setPlaybackSpeed(speed);
     });
+  }
+
+  void _showTextInputDialog() {
+    final textController = TextEditingController(text: _overlayText);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text('Add Text / Watermark',
+            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Enter title or @username',
+            hintStyle: const TextStyle(color: Colors.white38),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: const Color(0xFF00FFA3).withValues(alpha: 0.5)),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFF00FFA3)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => _overlayText = '');
+              Navigator.pop(ctx);
+            },
+            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00FFA3),
+              foregroundColor: Colors.black,
+            ),
+            onPressed: () {
+              setState(() => _overlayText = textController.text.trim());
+              Navigator.pop(ctx);
+            },
+            child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatDurationPrecise(double ms) {
@@ -291,6 +343,15 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         centerTitle: true,
         actions: [
           if (_selectedFile != null) ...[
+            // Text Overlay Button
+            IconButton(
+              icon: Icon(
+                Icons.text_fields_rounded,
+                color: _overlayText.isNotEmpty ? const Color(0xFF00FFA3) : Colors.white70,
+              ),
+              tooltip: 'Add Text',
+              onPressed: _showTextInputDialog,
+            ),
             IconButton(
               icon: Icon(
                 _isBlurBackground ? Icons.blur_on : Icons.blur_off,
@@ -383,6 +444,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
+                                  // Blur Background
                                   if (_isBlurBackground && !_isFillMode) ...[
                                     Positioned.fill(
                                       child: _isVideo
@@ -404,11 +466,13 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                       child: BackdropFilter(
                                         filter: ui.ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
                                         child: Container(
-                                          color: Colors.black.withOpacity(0.35),
+                                          color: Colors.black45,
                                         ),
                                       ),
                                     ),
                                   ],
+
+                                  // Media Player
                                   _isVideo
                                       ? (_videoController != null &&
                                               _videoController!.value.isInitialized
@@ -462,6 +526,39 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                           child: Image.file(_selectedFile!,
                                               fit: BoxFit.contain),
                                         ),
+
+                                  // Draggable Text / Watermark Layer
+                                  if (_overlayText.isNotEmpty)
+                                    Positioned(
+                                      left: _textPosition.dx,
+                                      top: _textPosition.dy,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+                                            _textPosition += details.delta;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 7),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(alpha: 0.7),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: const Color(0xFF00FFA3), width: 1.5),
+                                          ),
+                                          child: Text(
+                                            _overlayText,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -534,7 +631,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         rangeThumbShape:
                             const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
                         thumbColor: const Color(0xFF00FFA3),
-                        overlayColor: const Color(0xFF00FFA3).withOpacity(0.2),
+                        overlayColor: const Color(0x3300FFA3),
                       ),
                       child: RangeSlider(
                         values: _trimRange,
@@ -545,116 +642,3 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                             _trimRange = values;
                           });
                           _videoController!.seekTo(
-                              Duration(milliseconds: values.start.toInt()));
-                        },
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Start: ${_formatDurationPrecise(_trimRange.start)}',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 11),
-                        ),
-                        Text(
-                          'Trimmed: ${_formatDurationPrecise(_trimRange.end - _trimRange.start)}',
-                          style: const TextStyle(
-                              color: Color(0xFF00FFA3),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          'End: ${_formatDurationPrecise(_trimRange.end)}',
-                          style: const TextStyle(
-                              color: Colors.redAccent, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white38),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.grey[900],
-                          builder: (ctx) => Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.photo,
-                                    color: Colors.white),
-                                title: const Text('Choose Photo',
-                                    style: TextStyle(color: Colors.white)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickMedia(false);
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.video_collection,
-                                    color: Color(0xFF00FFA3)),
-                                title: const Text('Choose Video',
-                                    style: TextStyle(color: Colors.white)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickMedia(true);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.change_circle_outlined),
-                      label: const Text('Change'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00FFA3),
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: (_selectedFile != null && !_isSaving)
-                          ? _saveMedia
-                          : null,
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.black))
-                          : const Icon(Icons.check_circle),
-                      label: Text(_isSaving ? 'Saving...' : 'Save 9:16',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
