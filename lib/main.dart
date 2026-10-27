@@ -106,20 +106,19 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   Duration _videoTotalDuration = Duration.zero;
   double _currentSpeed = 1.0;
 
-  // Text Overlay Customization
+  // Text Overlay Variables
   String _overlayText = '';
   Offset _textPosition = const Offset(20, 40);
   double _textSize = 18.0;
-  Color _textColor = Colors.white;
+  int _colorIndex = 0;
 
-  final List<Color> _availableColors = [
+  final List<Color> _colorPalette = [
     Colors.white,
-    const Color(0xFF00FFA3),
+    Color(0xFF00FFA3),
     Colors.yellowAccent,
     Colors.cyanAccent,
     Colors.orangeAccent,
     Colors.redAccent,
-    Colors.pinkAccent,
   ];
 
   final ImagePicker _picker = ImagePicker();
@@ -199,113 +198,124 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   void _showTextInputDialog() {
     final textController = TextEditingController(text: _overlayText);
-    double tempSize = _textSize;
-    Color tempColor = _textColor;
+    double localSize = _textSize;
+    int localColorIndex = _colorIndex;
 
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: const Color(0xFF1E1E1E),
-          title: const Text('Text & Watermark Settings',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: textController,
-                  autofocus: true,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    hintText: 'Enter title or @username',
-                    hintStyle: TextStyle(color: Colors.white38),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0x7700FFA3)),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF00FFA3)),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E1E),
+              title: const Text(
+                'Text & Watermark',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Font Size', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                    Text('${tempSize.toInt()} pt', style: const TextStyle(color: Color(0xFF00FFA3), fontWeight: FontWeight.bold)),
+                    TextField(
+                      controller: textController,
+                      autofocus: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Enter title or @name',
+                        hintStyle: TextStyle(color: Colors.white38),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0x7700FFA3)),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF00FFA3)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Size', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text('${localSize.toInt()} pt', style: const TextStyle(color: Color(0xFF00FFA3), fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    Slider(
+                      value: localSize,
+                      min: 12.0,
+                      max: 40.0,
+                      activeColor: const Color(0xFF00FFA3),
+                      inactiveColor: Colors.white12,
+                      onChanged: (double val) {
+                        setDialogState(() {
+                          localSize = val;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    const Text('Color', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(_colorPalette.length, (int index) {
+                        final bool isSelected = localColorIndex == index;
+                        return GestureDetector(
+                          onTap: () {
+                            setDialogState(() {
+                              localColorIndex = index;
+                            });
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: _colorPalette[index],
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? Colors.white : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                            child: isSelected
+                                ? const Icon(Icons.check, size: 16, color: Colors.black)
+                                : null,
+                          ),
+                        );
+                      }),
+                    ),
                   ],
                 ),
-                Slider(
-                  value: tempSize,
-                  min: 12.0,
-                  max: 42.0,
-                  activeColor: const Color(0xFF00FFA3),
-                  inactiveColor: Colors.white12,
-                  onChanged: (val) {
-                    setDialogState(() => tempSize = val);
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _overlayText = '';
+                    });
+                    Navigator.pop(dialogContext);
                   },
+                  child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
                 ),
-                const SizedBox(height: 10),
-                const Text('Pick Color', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableColors.map((color) {
-                    final isPicked = tempColor == color;
-                    return InkWell(
-                      onTap: () {
-                        setDialogState(() => tempColor = color);
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: color,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: isPicked ? Colors.white : Colors.transparent,
-                            width: 2.5,
-                          ),
-                        ),
-                        child: isPicked
-                            ? const Icon(Icons.check, size: 18, color: Colors.black)
-                            : null,
-                      ),
-                    );
-                  }).toList(),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FFA3),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _overlayText = textController.text.trim();
+                      _textSize = localSize;
+                      _colorIndex = localColorIndex;
+                    });
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() => _overlayText = '');
-                Navigator.pop(ctx);
-              },
-              child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00FFA3),
-                foregroundColor: Colors.black,
-              ),
-              onPressed: () {
-                setState(() {
-                  _overlayText = textController.text.trim();
-                  _textSize = tempSize;
-                  _textColor = tempColor;
-                });
-                Navigator.pop(ctx);
-              },
-              child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -319,7 +329,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   }
 
   Widget _buildSpeedChip(double speed) {
-    final isSelected = _currentSpeed == speed;
+    final bool isSelected = _currentSpeed == speed;
     return Padding(
       padding: const EdgeInsets.only(left: 4.0),
       child: InkWell(
@@ -405,9 +415,10 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalMs = _videoTotalDuration.inMilliseconds.toDouble();
-    final currentPosMs =
+    final double totalMs = _videoTotalDuration.inMilliseconds.toDouble();
+    final double currentPosMs =
         _videoController?.value.position.inMilliseconds.toDouble() ?? 0.0;
+    final Color selectedColor = _colorPalette[_colorIndex];
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -559,3 +570,232 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                           child: Image.file(_selectedFile!,
                                               fit: BoxFit.contain),
                                         ),
+
+                                  // Draggable Custom Styled Text Layer
+                                  if (_overlayText.isNotEmpty)
+                                    Positioned(
+                                      left: _textPosition.dx,
+                                      top: _textPosition.dy,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+                                            _textPosition += details.delta;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 7),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xB3000000),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: selectedColor, width: 1.5),
+                                          ),
+                                          child: Text(
+                                            _overlayText,
+                                            style: TextStyle(
+                                              color: selectedColor,
+                                              fontSize: _textSize,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+
+            if (_isVideo &&
+                _videoController != null &&
+                _videoController!.value.isInitialized &&
+                totalMs > 0)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: _togglePlayPause,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00FFA3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _videoController!.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDurationPrecise(currentPosMs),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            _buildSpeedChip(0.5),
+                            _buildSpeedChip(1.0),
+                            _buildSpeedChip(1.5),
+                            _buildSpeedChip(2.0),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 5,
+                        activeTrackColor: const Color(0xFF00FFA3),
+                        inactiveTrackColor: Colors.white12,
+                        rangeThumbShape:
+                            const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
+                        thumbColor: const Color(0xFF00FFA3),
+                        overlayColor: const Color(0x3300FFA3),
+                      ),
+                      child: RangeSlider(
+                        values: _trimRange,
+                        min: 0.0,
+                        max: totalMs,
+                        onChanged: (RangeValues values) {
+                          setState(() {
+                            _trimRange = values;
+                          });
+                          _videoController!.seekTo(
+                              Duration(milliseconds: values.start.toInt()));
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Start: ${_formatDurationPrecise(_trimRange.start)}',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 11),
+                        ),
+                        Text(
+                          'Trimmed: ${_formatDurationPrecise(_trimRange.end - _trimRange.start)}',
+                          style: const TextStyle(
+                              color: Color(0xFF00FFA3),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          'End: ${_formatDurationPrecise(_trimRange.end)}',
+                          style: const TextStyle(
+                              color: Colors.redAccent, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white38),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.grey[900],
+                          builder: (ctx) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo,
+                                    color: Colors.white),
+                                title: const Text('Choose Photo',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(false);
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.video_collection,
+                                    color: Color(0xFF00FFA3)),
+                                title: const Text('Choose Video',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(true);
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.change_circle_outlined),
+                      label: const Text('Change'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00FFA3),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: (_selectedFile != null && !_isSaving)
+                          ? _saveMedia
+                          : null,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.black))
+                          : const Icon(Icons.check_circle),
+                      label: Text(_isSaving ? 'Saving...' : 'Save 9:16',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
