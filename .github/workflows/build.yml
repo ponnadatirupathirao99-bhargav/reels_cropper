@@ -31,29 +31,6 @@ jobs:
           flutter pub add image_picker gal path_provider video_player
           cp saved_main.dart lib/main.dart
 
-      - name: Setup Custom App Launcher Icon
-        run: |
-          mkdir -p assets
-          pip install Pillow
-          python3 -c "
-          from PIL import Image, ImageDraw
-          img = Image.new('RGB', (512, 512), color='#121212')
-          draw = ImageDraw.Draw(img)
-          draw.rounded_rectangle([156, 60, 356, 452], radius=32, outline='#00FFA3', width=18)
-          draw.polygon([(230, 206), (230, 306), (315, 256)], fill='#00FFA3')
-          img.save('assets/app_icon.png')
-          "
-          flutter pub add --dev flutter_launcher_icons
-          cat << 'EOF' >> pubspec.yaml
-
-          flutter_launcher_icons:
-            android: "launcher_icon"
-            ios: false
-            image_path: "assets/app_icon.png"
-            min_sdk_android: 21
-          EOF
-          dart run flutter_launcher_icons
-
       - name: Build Release APK
         run: flutter build apk --release --no-tree-shake-icons
 
