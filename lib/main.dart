@@ -171,7 +171,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     ),
   ];
 
-  // Sticker / Emoji Variables
+  // Sticker Variables
   String _selectedEmoji = '';
   Offset _emojiPosition = const Offset(140, 200);
 
@@ -180,40 +180,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     '❤️', '👏', '⚡', '👀', '🎯', '⭐'
   ];
 
-  // Video Color Filters
+  // Color Filter Options
   int _selectedFilterIndex = 0;
-  final List<String> _filterNames = ['Normal', 'B&W', 'Vintage', 'Vibrant', 'Cool Blue'];
-  final List<List<double>?> _filterMatrices = [
-    null, // Normal
-    // B&W (Grayscale)
-    [
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0.2126, 0.7152, 0.0722, 0, 0,
-      0,      0,      0,      1, 0,
-    ],
-    // Vintage / Sepia
-    [
-      0.393, 0.769, 0.189, 0, 0,
-      0.349, 0.686, 0.168, 0, 0,
-      0.272, 0.534, 0.131, 0, 0,
-      0,     0,     0,     1, 0,
-    ],
-    // Vibrant (Boost contrast & colors)
-    [
-      1.2, 0,   0,   0, 0,
-      0,   1.2, 0,   0, 0,
-      0,   0,   1.2, 0, 0,
-      0,   0,   0,   1, 0,
-    ],
-    // Cool Blue
-    [
-      0.8, 0,   0,   0, 0,
-      0,   0.9, 0,   0, 0,
-      0,   0,   1.3, 0, 0,
-      0,   0,   0,   1, 0,
-    ],
-  ];
+  final List<String> _filterNames = ['Normal', 'B&W', 'Vintage', 'Warm', 'Cool'];
 
   final ImagePicker _picker = ImagePicker();
 
@@ -606,4 +575,188 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text('Color',
-                            style: TextStyle(color:
+                            style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: List.generate(_colorPalette.length, (int index) {
+                        final bool isSelected = localColorIndex == index;
+                        return GestureDetector(
+                          onTap: () {
+                            setDialogState(() {
+                              localColorIndex = index;
+                            });
+                          },
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: _colorPalette[index],
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected ? Colors.white : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                            child: isSelected
+                                ? const Icon(Icons.check, size: 16, color: Colors.black)
+                                : null,
+                          ),
+                        );
+                      }),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _overlayText = '';
+                    });
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF00FFA3),
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _overlayText = textController.text.trim();
+                      _textSize = localSize;
+                      _colorIndex = localColorIndex;
+                    });
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Apply',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _formatDurationPrecise(double ms) {
+    final duration = Duration(milliseconds: ms.toInt());
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    final millis = ((duration.inMilliseconds % 1000) ~/ 100).toString();
+    return '$minutes:$seconds.$millis';
+  }
+
+  Widget _buildSpeedChip(double speed) {
+    final bool isSelected = _currentSpeed == speed;
+    return Padding(
+      padding: const EdgeInsets.only(left: 4.0),
+      child: InkWell(
+        onTap: () => _setPlaybackSpeed(speed),
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF00FFA3) : Colors.white10,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Text(
+            '${speed}x',
+            style: TextStyle(
+              color: isSelected ? Colors.black : Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveMedia() async {
+    if (_selectedFile == null) return;
+    setState(() => _isSaving = true);
+
+    try {
+      if (_isVideo) {
+        await Gal.putVideo(_selectedFile!.path);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Video saved to Gallery! 🎬'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        RenderRepaintBoundary boundary =
+            _cropKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+        ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        final pngBytes = byteData!.buffer.asUint8List();
+
+        final tempDir = await getTemporaryDirectory();
+        final file = await File(
+                '${tempDir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.png')
+            .create();
+        await file.writeAsBytes(pngBytes);
+
+        await Gal.putImage(file.path);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Saved $_aspectRatioLabel Photo to Gallery! 🎉'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController?.removeListener(_videoListener);
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  Widget _buildFilteredChild(Widget child) {
+    if (_selectedFilterIndex == 1) {
+      // B&W (Grayscale matrix)
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0.2126, 0.7152, 0.0722, 0, 0,
+          0,      0,      0,      1, 0,
+        ]),
+        child: child,
+      );
+    } else if (_selectedFilterIndex == 2) {
+      // Vintage / Sepia
+      return ColorFiltered(
+        colorFilter: const ColorFilter.matrix(<double>[
+          0.393, 0.769, 0.189, 0, 0,
+          0.349, 0.686, 0.168, 0, 0,
+          0.272, 0.534, 0.131, 0, 0,
+          0,     0,     0,     1, 0,
+        ]),
+        child: child,
+      );
+    } else if (_selectedFilterIndex ==
