@@ -34,14 +34,12 @@ jobs:
       - name: Setup Custom App Launcher Icon
         run: |
           mkdir -p assets
-          # 512x512 సైజుతో Reels Cropper కోసం డార్క్ గ్రీన్ గ్రేడియంట్ ఐకాన్ సృష్టిస్తుంది
+          pip install Pillow
           python3 -c "
           from PIL import Image, ImageDraw
           img = Image.new('RGB', (512, 512), color='#121212')
           draw = ImageDraw.Draw(img)
-          # 9:16 రేషియో ఫ్రేమ్ బాక్స్
           draw.rounded_rectangle([156, 60, 356, 452], radius=32, outline='#00FFA3', width=18)
-          # సెంటర్ ప్లే ట్రయాంగిల్
           draw.polygon([(230, 206), (230, 306), (315, 256)], fill='#00FFA3')
           img.save('assets/app_icon.png')
           "
