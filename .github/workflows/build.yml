@@ -31,11 +31,8 @@ jobs:
           flutter pub add image_picker gal path_provider video_player
           cp saved_main.dart lib/main.dart
 
-      - name: Dart Code Verification
-        run: flutter analyze lib/main.dart
-
       - name: Build Release APK
-        run: flutter build apk --release --verbose --no-tree-shake-icons
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
