@@ -102,7 +102,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   final GlobalKey _cropKey = GlobalKey();
   bool _isSaving = false;
   bool _isFillMode = false;
-  bool _isMuted = false;
+  double _currentVolume = 1.0;
 
   // Aspect Ratio Settings
   double _aspectRatio = 9 / 16;
@@ -205,12 +205,13 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           _selectedFile = File(picked.path);
           _isVideo = true;
           _videoController = controller;
-          _isMuted = false;
+          _currentVolume = 1.0;
           _currentSpeed = 1.0;
           _videoTotalDuration = controller.value.duration;
           _trimRange = RangeValues(0.0, totalMs > 0 ? totalMs : 1.0);
         });
 
+        controller.setVolume(_currentVolume);
         controller.addListener(_videoListener);
         controller.play();
       } else {
@@ -243,20 +244,130 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     });
   }
 
-  void _toggleMute() {
-    if (_videoController == null) return;
-    setState(() {
-      _isMuted = !_isMuted;
-      _videoController!.setVolume(_isMuted ? 0.0 : 1.0);
-    });
-  }
-
   void _setPlaybackSpeed(double speed) {
     if (_videoController == null) return;
     setState(() {
       _currentSpeed = speed;
       _videoController!.setPlaybackSpeed(speed);
     });
+  }
+
+  void _showVolumeDialog() {
+    double tempVolume = _currentVolume;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) => Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Audio Volume',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${(tempVolume * 100).toInt()}%',
+                    style: const TextStyle(
+                      color: Color(0xFF00FFA3),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(
+                    tempVolume == 0.0 ? Icons.volume_off : Icons.volume_down,
+                    color: Colors.white70,
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: tempVolume,
+                      min: 0.0,
+                      max: 1.5,
+                      activeColor: const Color(0xFF00FFA3),
+                      inactiveColor: Colors.white12,
+                      onChanged: (val) {
+                        setSheetState(() => tempVolume = val);
+                        setState(() {
+                          _currentVolume = val;
+                          _videoController?.setVolume(val);
+                        });
+                      },
+                    ),
+                  ),
+                  const Icon(Icons.volume_up, color: Color(0xFF00FFA3)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                    ),
+                    onPressed: () {
+                      setSheetState(() => tempVolume = 0.0);
+                      setState(() {
+                        _currentVolume = 0.0;
+                        _videoController?.setVolume(0.0);
+                      });
+                    },
+                    child: const Text('Mute (0%)'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white12,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      setSheetState(() => tempVolume = 1.0);
+                      setState(() {
+                        _currentVolume = 1.0;
+                        _videoController?.setVolume(1.0);
+                      });
+                    },
+                    child: const Text('100%'),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF00FFA3),
+                      foregroundColor: Colors.black,
+                    ),
+                    onPressed: () {
+                      setSheetState(() => tempVolume = 1.5);
+                      setState(() {
+                        _currentVolume = 1.5;
+                        _videoController?.setVolume(1.5);
+                      });
+                    },
+                    child: const Text('Boost 150%'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showFilterSelector() {
@@ -738,7 +849,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   Widget _buildFilteredChild(Widget child) {
     if (_selectedFilterIndex == 1) {
-      // B&W (Monochrome Tone)
       return ColorFiltered(
         colorFilter: const ColorFilter.mode(
           Colors.grey,
@@ -747,7 +857,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         child: child,
       );
     } else if (_selectedFilterIndex == 2) {
-      // Vintage Tone
       return ColorFiltered(
         colorFilter: const ColorFilter.mode(
           Color(0xFF8B5A2B),
@@ -756,7 +865,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         child: child,
       );
     } else if (_selectedFilterIndex == 3) {
-      // Warm Tone
       return ColorFiltered(
         colorFilter: const ColorFilter.mode(
           Colors.orangeAccent,
@@ -765,7 +873,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         child: child,
       );
     } else if (_selectedFilterIndex == 4) {
-      // Cool Tone
       return ColorFiltered(
         colorFilter: const ColorFilter.mode(
           Colors.cyanAccent,
@@ -837,11 +944,15 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             if (_isVideo && _videoController != null) ...[
               IconButton(
                 icon: Icon(
-                  _isMuted ? Icons.volume_off : Icons.volume_up,
-                  color: _isMuted ? Colors.redAccent : const Color(0xFF00FFA3),
+                  _currentVolume == 0.0
+                      ? Icons.volume_off
+                      : (_currentVolume > 1.0 ? Icons.volume_up : Icons.volume_down),
+                  color: _currentVolume == 0.0
+                      ? Colors.redAccent
+                      : const Color(0xFF00FFA3),
                 ),
-                tooltip: _isMuted ? 'Unmute' : 'Mute',
-                onPressed: _toggleMute,
+                tooltip: 'Audio Controls',
+                onPressed: _showVolumeDialog,
               ),
               Padding(
                 padding: const EdgeInsets.only(right: 4.0),
