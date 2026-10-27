@@ -202,7 +202,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           _currentVolume = 1.0;
           _currentSpeed = 1.0;
           _videoTotalDuration = controller.value.duration;
-          _trimRange = RangeValues(0.0, totalMs > 0 ? totalMs : 1.0);
+          _trimRange = RangeValues(0.0, totalMs > 0.0 ? totalMs : 1.0);
         });
 
         controller.setVolume(_currentVolume);
@@ -250,6 +250,22 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       _currentSpeed = speed;
       _videoController!.setPlaybackSpeed(speed);
     });
+  }
+
+  void _handleTimelineScrub(DragUpdateDetails details) {
+    if (_videoController == null || !_videoController!.value.isInitialized) return;
+    final double totalMs = _videoTotalDuration.inMilliseconds.toDouble();
+    if (totalMs <= 0.0) return;
+
+    final double deltaMs = -details.delta.dx * 40.0;
+    final double currentMs = _videoController!.value.position.inMilliseconds.toDouble();
+    double targetMs = currentMs + deltaMs;
+
+    if (targetMs < _trimRange.start) targetMs = _trimRange.start;
+    if (targetMs > _trimRange.end) targetMs = _trimRange.end;
+
+    _videoController!.seekTo(Duration(milliseconds: targetMs.toInt()));
+    setState(() {});
   }
 
   void _showVolumeDialog() {
@@ -713,320 +729,4 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                 ? const Icon(Icons.check, size: 16, color: Colors.black)
                                 : null,
                           ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _overlayText = '';
-                    });
-                    Navigator.pop(dialogContext);
-                  },
-                  child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00FFA3),
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _overlayText = textController.text.trim();
-                      _textSize = localSize;
-                      _colorIndex = localColorIndex;
-                    });
-                    Navigator.pop(dialogContext);
-                  },
-                  child: const Text('Apply',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showSpeedSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Playback Speed',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [0.5, 1.0, 1.5, 2.0].map((s) {
-                final isSelected = _currentSpeed == s;
-                return ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isSelected ? const Color(0xFF00FFA3) : Colors.white12,
-                    foregroundColor: isSelected ? Colors.black : Colors.white,
-                  ),
-                  onPressed: () {
-                    _setPlaybackSpeed(s);
-                    Navigator.pop(ctx);
-                  },
-                  child: Text('${s}x', style: const TextStyle(fontWeight: FontWeight.bold)),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDurationPrecise(double ms) {
-    final duration = Duration(milliseconds: ms.toInt());
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    final millis = ((duration.inMilliseconds % 1000) ~/ 100).toString();
-    return '$minutes:$seconds.$millis';
-  }
-
-  Future<void> _saveMedia() async {
-    if (_selectedFile == null) return;
-    setState(() => _isSaving = true);
-
-    try {
-      if (_isVideo) {
-        await Gal.putVideo(_selectedFile!.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Video exported to Gallery! 🎬'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        RenderRepaintBoundary boundary =
-            _cropKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-        ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        final pngBytes = byteData!.buffer.asUint8List();
-
-        final tempDir = await getTemporaryDirectory();
-        final file = await File(
-                '${tempDir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.png')
-            .create();
-        await file.writeAsBytes(pngBytes);
-
-        await Gal.putImage(file.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Saved $_aspectRatioLabel Photo to Gallery! 🎉'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.removeListener(_videoListener);
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  Widget _buildFilteredChild(Widget child) {
-    if (_selectedFilterIndex == 1) {
-      return ColorFiltered(
-        colorFilter: const ColorFilter.mode(
-          Colors.grey,
-          BlendMode.saturation,
-        ),
-        child: child,
-      );
-    } else if (_selectedFilterIndex == 2) {
-      return ColorFiltered(
-        colorFilter: const ColorFilter.mode(
-          Color(0xFF8B5A2B),
-          BlendMode.color,
-        ),
-        child: child,
-      );
-    } else if (_selectedFilterIndex == 3) {
-      return ColorFiltered(
-        colorFilter: const ColorFilter.mode(
-          Colors.orangeAccent,
-          BlendMode.softLight,
-        ),
-        child: child,
-      );
-    } else if (_selectedFilterIndex == 4) {
-      return ColorFiltered(
-        colorFilter: const ColorFilter.mode(
-          Colors.cyanAccent,
-          BlendMode.softLight,
-        ),
-        child: child,
-      );
-    }
-    return child;
-  }
-
-  Widget _buildTimelineTrack({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    bool isActive = false,
-  }) {
-    return Container(
-      height: 38,
-      margin: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(icon, color: isActive ? const Color(0xFF00FFA3) : Colors.white60, size: 20),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                alignment: Alignment.centerLeft,
-                decoration: BoxDecoration(
-                  color: isActive ? const Color(0x3300FFA3) : const Color(0xFF1F1F1F),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isActive ? const Color(0xFF00FFA3) : Colors.white12,
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isActive ? const Color(0xFF00FFA3) : Colors.white54,
-                    fontSize: 12,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color ?? Colors.white, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: color ?? Colors.white70,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final double totalMs = _videoTotalDuration.inMilliseconds.toDouble();
-    final double currentPosMs =
-        _videoController?.value.position.inMilliseconds.toDouble() ?? 0.0;
-    final Color selectedColor = _colorPalette[_colorIndex];
-
-    return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF141414),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () {
-            if (_selectedFile != null) {
-              setState(() {
-                _videoController?.dispose();
-                _videoController = null;
-                _selectedFile = null;
-              });
-            }
-          },
-        ),
-        title: InkWell(
-          onTap: _showRatioSelector,
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white10,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.aspect_ratio, size: 16, color: Color(0xFF00FFA3)),
-                const SizedBox(width: 6),
-                Text(
-                  _aspectRatioLabel,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Icon(Icons
+                        
