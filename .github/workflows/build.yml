@@ -24,31 +24,15 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup and Build APK
-        run: |
-          if [ -f "pubspec.yaml" ]; then
-            echo "Running from root directory"
-            flutter pub get
-            flutter build apk --release --no-tree-shake-icons
-            echo "APK_PATH=build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-          elif [ -f "reels_cropper/pubspec.yaml" ]; then
-            echo "Running from reels_cropper directory"
-            cd reels_cropper
-            flutter pub get
-            flutter build apk --release --no-tree-shake-icons
-            echo "APK_PATH=reels_cropper/build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-          else
-            echo "Searching for pubspec.yaml..."
-            TARGET_DIR=$(dirname $(find . -name "pubspec.yaml" | head -n 1))
-            cd "$TARGET_DIR"
-            flutter pub get
-            flutter build apk --release --no-tree-shake-icons
-            echo "APK_PATH=${TARGET_DIR}/build/app/outputs/flutter-apk/app-release.apk" >> $GITHUB_ENV
-          fi
+      - name: Setup Project and Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: reels-cropper-release
-          path: ${{ env.APK_PATH }}
+          path: build/app/outputs/flutter-apk/app-release.apk
