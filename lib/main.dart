@@ -121,6 +121,42 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     Colors.redAccent,
   ];
 
+  // Background Style Variables
+  int _selectedBgIndex = 0;
+  final List<Decoration> _bgDecorations = [
+    const BoxDecoration(color: Colors.black),
+    const BoxDecoration(color: Color(0xFF1E1E1E)),
+    const BoxDecoration(color: Colors.white),
+    const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF8A2387), Color(0xFFE94057), Color(0xFFF27121)],
+      ),
+    ),
+    const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+      ),
+    ),
+    const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF0052D4), Color(0xFF4364F7), Color(0xFF6FB1FC)],
+      ),
+    ),
+    const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+      ),
+    ),
+  ];
+
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickMedia(bool isVideo) async {
@@ -196,6 +232,70 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     });
   }
 
+  void _showBackgroundSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select Background Style',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 60,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _bgDecorations.length,
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedBgIndex == index;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedBgIndex = index;
+                      });
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: _bgDecorations[index],
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFF00FFA3) : Colors.white24,
+                            width: isSelected ? 3 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: isSelected
+                            ? const Icon(Icons.check, color: Color(0xFF00FFA3), size: 20)
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showTextInputDialog() {
     final textController = TextEditingController(text: _overlayText);
     double localSize = _textSize;
@@ -237,7 +337,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Size', style: TextStyle(color: Colors.white70, fontSize: 13)),
-                        Text('${localSize.toInt()} pt', style: const TextStyle(color: Color(0xFF00FFA3), fontWeight: FontWeight.bold)),
+                        Text('${localSize.toInt()} pt',
+                            style: const TextStyle(
+                                color: Color(0xFF00FFA3), fontWeight: FontWeight.bold)),
                       ],
                     ),
                     Slider(
@@ -429,6 +531,13 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         centerTitle: true,
         actions: [
           if (_selectedFile != null) ...[
+            // Background Theme / Colors Selector Button
+            IconButton(
+              icon: const Icon(Icons.palette_outlined, color: Color(0xFF00FFA3)),
+              tooltip: 'Background Styles',
+              onPressed: _showBackgroundSelector,
+            ),
+            // Text Overlay Button
             IconButton(
               icon: Icon(
                 Icons.text_fields_rounded,
@@ -513,7 +622,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                           child: AspectRatio(
                             aspectRatio: 9 / 16,
                             child: Container(
-                              color: Colors.black,
+                              decoration: _bgDecorations[_selectedBgIndex],
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
@@ -571,7 +680,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                               fit: BoxFit.contain),
                                         ),
 
-                                  // Draggable Custom Styled Text Layer
                                   if (_overlayText.isNotEmpty)
                                     Positioned(
                                       left: _textPosition.dx,
