@@ -7,10 +7,12 @@ import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_player/video_player.dart';
 
-void main() => runApp(const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
-    ));
+void main() {
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: SplashScreen(),
+  ));
+}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -102,10 +104,15 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isFillMode = false;
   bool _isMuted = false;
 
-  // Aspect Ratio Settings
+  // Aspect Ratio Variables
   double _aspectRatio = 9 / 16;
   String _aspectRatioLabel = '9:16';
-  final List<String> _ratioNames = ['9:16 (Reel)', '1:1 (Square)', '4:5 (Post)', '16:9 (Landscape)'];
+  final List<String> _ratioNames = [
+    '9:16 (Reel)',
+    '1:1 (Square)',
+    '4:5 (Post)',
+    '16:9 (Landscape)'
+  ];
   final List<double> _ratioValues = [9 / 16, 1.0, 4 / 5, 16 / 9];
 
   RangeValues _trimRange = const RangeValues(0, 1);
@@ -120,7 +127,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   final List<Color> _colorPalette = [
     Colors.white,
-    Color(0xFF00FFA3),
+    const Color(0xFF00FFA3),
     Colors.yellowAccent,
     Colors.cyanAccent,
     Colors.orangeAccent,
@@ -163,7 +170,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     ),
   ];
 
-  // Sticker / Emoji Variables
+  // Sticker Variables
   String _selectedEmoji = '';
   Offset _emojiPosition = const Offset(140, 200);
 
@@ -456,7 +463,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               backgroundColor: const Color(0xFF1E1E1E),
               title: const Text(
                 'Text & Watermark',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -471,7 +479,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         hintText: 'Enter title or @name',
                         hintStyle: TextStyle(color: Colors.white38),
                         enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: Color(0x7700FFA3)),
+                          borderSide: BorderSide(color: Colors.white24),
                         ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Color(0xFF00FFA3)),
@@ -482,7 +490,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Size', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        const Text('Size',
+                            style: TextStyle(color: Colors.white70, fontSize: 13)),
                         Text('${localSize.toInt()} pt',
                             style: const TextStyle(
                                 color: Color(0xFF00FFA3), fontWeight: FontWeight.bold)),
@@ -501,7 +510,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       },
                     ),
                     const SizedBox(height: 10),
-                    const Text('Color', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    const Text('Color',
+                            style: TextStyle(color: Colors.white70, fontSize: 13)),
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -557,7 +567,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                     });
                     Navigator.pop(dialogContext);
                   },
-                  child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Apply',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -684,13 +695,16 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
               icon: const Icon(Icons.aspect_ratio_rounded, size: 18),
-              label: Text(_aspectRatioLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(_aspectRatioLabel,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               onPressed: _showRatioSelector,
             ),
             IconButton(
               icon: Icon(
                 Icons.emoji_emotions_outlined,
-                color: _selectedEmoji.isNotEmpty ? const Color(0xFF00FFA3) : Colors.white70,
+                color: _selectedEmoji.isNotEmpty
+                    ? const Color(0xFF00FFA3)
+                    : Colors.white70,
               ),
               tooltip: 'Add Sticker',
               onPressed: _showEmojiSelector,
@@ -703,7 +717,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             IconButton(
               icon: Icon(
                 Icons.text_fields_rounded,
-                color: _overlayText.isNotEmpty ? const Color(0xFF00FFA3) : Colors.white70,
+                color: _overlayText.isNotEmpty
+                    ? const Color(0xFF00FFA3)
+                    : Colors.white70,
               ),
               tooltip: 'Add Text',
               onPressed: _showTextInputDialog,
@@ -744,4 +760,351 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         width: 250,
                         height: 250 * (16 / 9),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white30, width
+                          border: Border.all(color: Colors.white30, width: 2),
+                          borderRadius: BorderRadius.circular(16),
+                          color: Colors.white10,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.video_library_outlined,
+                                size: 55, color: Colors.white70),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white24,
+                                  foregroundColor: Colors.white),
+                              onPressed: () => _pickMedia(false),
+                              icon: const Icon(Icons.image),
+                              label: const Text('Select Photo'),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF00FFA3),
+                                  foregroundColor: Colors.black),
+                              onPressed: () => _pickMedia(true),
+                              icon: const Icon(Icons.videocam),
+                              label: const Text('Select Video'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: RepaintBoundary(
+                          key: _cropKey,
+                          child: AspectRatio(
+                            aspectRatio: _aspectRatio,
+                            child: Container(
+                              decoration: _bgDecorations[_selectedBgIndex],
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  _isVideo
+                                      ? (_videoController != null &&
+                                              _videoController!.value.isInitialized
+                                          ? GestureDetector(
+                                              onTap: _togglePlayPause,
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Center(
+                                                    child: FittedBox(
+                                                      fit: _isFillMode
+                                                          ? BoxFit.cover
+                                                          : BoxFit.contain,
+                                                      clipBehavior: Clip.hardEdge,
+                                                      child: SizedBox(
+                                                        width: _videoController!
+                                                            .value.size.width,
+                                                        height: _videoController!
+                                                            .value.size.height,
+                                                        child: VideoPlayer(
+                                                            _videoController!),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  if (!_videoController!
+                                                      .value.isPlaying)
+                                                    Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.black54,
+                                                        borderRadius:
+                                                            BorderRadius.circular(30),
+                                                      ),
+                                                      padding:
+                                                          const EdgeInsets.all(12),
+                                                      child: const Icon(
+                                                        Icons.play_arrow,
+                                                        size: 40,
+                                                        color: Colors.white,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            )
+                                          : const Center(
+                                              child: CircularProgressIndicator()))
+                                      : InteractiveViewer(
+                                          clipBehavior: Clip.hardEdge,
+                                          boundaryMargin: const EdgeInsets.all(200),
+                                          minScale: 0.2,
+                                          maxScale: 5.0,
+                                          child: Image.file(_selectedFile!,
+                                              fit: BoxFit.contain),
+                                        ),
+
+                                  if (_overlayText.isNotEmpty)
+                                    Positioned(
+                                      left: _textPosition.dx,
+                                      top: _textPosition.dy,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+                                            _textPosition += details.delta;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 14, vertical: 7),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black87,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: selectedColor, width: 1.5),
+                                          ),
+                                          child: Text(
+                                            _overlayText,
+                                            style: TextStyle(
+                                              color: selectedColor,
+                                              fontSize: _textSize,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                  if (_selectedEmoji.isNotEmpty)
+                                    Positioned(
+                                      left: _emojiPosition.dx,
+                                      top: _emojiPosition.dy,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+                                            _emojiPosition += details.delta;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black38,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: Colors.white24, width: 1),
+                                          ),
+                                          child: Text(
+                                            _selectedEmoji,
+                                            style: const TextStyle(fontSize: 34),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+
+            if (_isVideo &&
+                _videoController != null &&
+                _videoController!.value.isInitialized &&
+                totalMs > 0)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: _togglePlayPause,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00FFA3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _videoController!.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatDurationPrecise(currentPosMs),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: [
+                            _buildSpeedChip(0.5),
+                            _buildSpeedChip(1.0),
+                            _buildSpeedChip(1.5),
+                            _buildSpeedChip(2.0),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 5,
+                        activeTrackColor: const Color(0xFF00FFA3),
+                        inactiveTrackColor: Colors.white12,
+                        rangeThumbShape:
+                            const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
+                        thumbColor: const Color(0xFF00FFA3),
+                        overlayColor: Colors.transparent,
+                      ),
+                      child: RangeSlider(
+                        values: _trimRange,
+                        min: 0.0,
+                        max: totalMs,
+                        onChanged: (RangeValues values) {
+                          setState(() {
+                            _trimRange = values;
+                          });
+                          _videoController!.seekTo(
+                              Duration(milliseconds: values.start.toInt()));
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Start: ${_formatDurationPrecise(_trimRange.start)}',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 11),
+                        ),
+                        Text(
+                          'Trimmed: ${_formatDurationPrecise(_trimRange.end - _trimRange.start)}',
+                          style: const TextStyle(
+                              color: Color(0xFF00FFA3),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          'End: ${_formatDurationPrecise(_trimRange.end)}',
+                          style: const TextStyle(
+                              color: Colors.redAccent, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white38),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.grey[900],
+                          builder: (ctx) => Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.photo,
+                                    color: Colors.white),
+                                title: const Text('Choose Photo',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(false);
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.video_collection,
+                                    color: Color(0xFF00FFA3)),
+                                title: const Text('Choose Video',
+                                    style: TextStyle(color: Colors.white)),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  _pickMedia(true);
+                                },
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.change_circle_outlined),
+                      label: const Text('Change'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00FFA3),
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: (_selectedFile != null && !_isSaving)
+                          ? _saveMedia
+                          : null,
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.black))
+                          : const Icon(Icons.check_circle),
+                      label: Text(_isSaving ? 'Saving...' : 'Save $_aspectRatioLabel',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
