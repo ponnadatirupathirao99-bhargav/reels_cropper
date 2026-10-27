@@ -12,6 +12,16 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Find Flutter Root Directory
+        id: find-dir
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "dir=." >> $GITHUB_OUTPUT
+          else
+            DIR=$(find . -maxdepth 2 -name "pubspec.yaml" -exec dirname {} \;)
+            echo "dir=$DIR" >> $GITHUB_OUTPUT
+          fi
+
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -25,19 +35,18 @@ jobs:
           cache: true
 
       - name: Setup Project and Dependencies
+        working-directory: ${{ steps.find-dir.outputs.dir }}
         run: |
-          flutter clean
           flutter pub get
 
-      - name: Analyze Project
-        run: flutter analyze
-
       - name: Build Release APK
-        run: flutter build apk --release --verbose
+        working-directory: ${{ steps.find-dir.outputs.dir }}
+        run: |
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: reels-cropper-release
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: ${{ steps.find-dir.outputs.dir }}/build/app/outputs/flutter-apk/app-release.apk
