@@ -137,7 +137,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     Colors.redAccent,
   ];
 
-  final List<String> _fontNames = ['Default', 'Serif', 'Monospace', 'Cursive'];
+  final List<String> _fontNames = ['Bold', 'Heavy', 'Italic', 'Light'];
 
   // Background Styles
   int _selectedBgIndex = 0;
@@ -702,4 +702,28 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisSize:
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Select Canvas Background',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 60,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _bgDecorations.length,
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedBgIndex == index;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedBgIndex = index;
+                      });
+                      Navigator.pop
