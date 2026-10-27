@@ -43,11 +43,11 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 100,
-              height: 100,
+              width: 90,
+              height: 90,
               decoration: BoxDecoration(
                 color: Colors.black,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: const Color(0xFF00FFA3), width: 3),
                 boxShadow: [
                   BoxShadow(
@@ -59,11 +59,11 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               child: const Icon(
                 Icons.crop_portrait_rounded,
-                size: 55,
+                size: 50,
                 color: Color(0xFF00FFA3),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             const Text(
               'Reels Cropper',
               style: TextStyle(
@@ -75,13 +75,10 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Convert to 9:16 Vertical HD',
-              style: TextStyle(
-                color: Colors.white54,
-                fontSize: 14,
-              ),
+              'Pro 9:16 Video Editor & Trimmer',
+              style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 32),
             const SizedBox(
               width: 24,
               height: 24,
@@ -113,7 +110,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isFillMode = false;
   bool _isMuted = false;
 
-  // Trimming variables
+  // Timeline & Trimming variables
   RangeValues _trimRange = const RangeValues(0, 1);
   Duration _videoTotalDuration = Duration.zero;
 
@@ -158,12 +155,22 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     if (!mounted || _videoController == null) return;
     final currentMs = _videoController!.value.position.inMilliseconds.toDouble();
 
+    // Loop within trimmed boundary
     if (currentMs >= _trimRange.end) {
       _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
     } else if (currentMs < _trimRange.start) {
       _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
     }
     setState(() {});
+  }
+
+  void _togglePlayPause() {
+    if (_videoController == null) return;
+    setState(() {
+      _videoController!.value.isPlaying
+          ? _videoController!.pause()
+          : _videoController!.play();
+    });
   }
 
   void _toggleMute() {
@@ -174,12 +181,13 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     });
   }
 
-  String _formatDurationMs(double ms) {
+  String _formatDurationPrecise(double ms) {
     final duration = Duration(milliseconds: ms.toInt());
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
+    final millis = ((duration.inMilliseconds % 1000) ~/ 100).toString();
+    return '$minutes:$seconds.$millis';
   }
 
   Future<void> _saveMedia() async {
@@ -244,6 +252,8 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   @override
   Widget build(BuildContext context) {
     final totalMs = _videoTotalDuration.inMilliseconds.toDouble();
+    final currentPosMs =
+        _videoController?.value.position.inMilliseconds.toDouble() ?? 0.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -333,13 +343,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                   ? (_videoController != null &&
                                           _videoController!.value.isInitialized
                                       ? GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _videoController!.value.isPlaying
-                                                  ? _videoController!.pause()
-                                                  : _videoController!.play();
-                                            });
-                                          },
+                                          onTap: _togglePlayPause,
                                           child: Stack(
                                             alignment: Alignment.center,
                                             children: [
@@ -394,44 +398,88 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       ),
               ),
             ),
+
+            // ADVANCED TIMELINE CONTROLS PANEL
             if (_isVideo &&
                 _videoController != null &&
                 _videoController!.value.isInitialized &&
                 totalMs > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white12),
+                ),
                 child: Column(
                   children: [
+                    // Row 1: Play/Pause button + Current Position Tracker
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Start: ${_formatDurationMs(_trimRange.start)}',
+                        InkWell(
+                          onTap: _togglePlayPause,
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF00FFA3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _videoController!.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.black,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _formatDurationPrecise(currentPosMs),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white10,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Duration: ${_formatDurationPrecise(_trimRange.end - _trimRange.start)}',
                             style: const TextStyle(
                                 color: Color(0xFF00FFA3),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600)),
-                        Text('Selected: ${_formatDurationMs(_trimRange.end - _trimRange.start)}',
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12)),
-                        Text('End: ${_formatDurationMs(_trimRange.end)}',
-                            style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600)),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600),
+                          ),
+                        ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+
+                    // Row 2: RangeSlider for Trim Start & End
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        trackHeight: 4,
+                        trackHeight: 5,
+                        activeTrackColor: const Color(0xFF00FFA3),
+                        inactiveTrackColor: Colors.white12,
                         rangeThumbShape:
-                            const RoundRangeSliderThumbShape(enabledThumbRadius: 7),
+                            const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
+                        thumbColor: const Color(0xFF00FFA3),
+                        overlayColor: const Color(0xFF00FFA3).withOpacity(0.2),
                       ),
                       child: RangeSlider(
                         values: _trimRange,
                         min: 0.0,
                         max: totalMs,
-                        activeColor: const Color(0xFF00FFA3),
-                        inactiveColor: Colors.white24,
                         onChanged: (RangeValues values) {
                           setState(() {
                             _trimRange = values;
@@ -441,11 +489,30 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         },
                       ),
                     ),
+
+                    // Row 3: Start Time & End Time labels
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Start: ${_formatDurationPrecise(_trimRange.start)}',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 11),
+                        ),
+                        Text(
+                          'End: ${_formatDurationPrecise(_trimRange.end)}',
+                          style: const TextStyle(
+                              color: Colors.redAccent, fontSize: 11),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
+
+            // Bottom Actions: Change & Save
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   Expanded(
@@ -454,6 +521,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white38),
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: () {
                         showModalBottomSheet(
@@ -497,6 +567,9 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         backgroundColor: const Color(0xFF00FFA3),
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: (_selectedFile != null && !_isSaving)
                           ? _saveMedia
