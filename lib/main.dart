@@ -52,14 +52,14 @@ class _SplashScreenState extends State<SplashScreen> {
                 border: Border.all(color: const Color(0xFF00FFA3), width: 3),
               ),
               child: const Icon(
-                Icons.crop_portrait_rounded,
+                Icons.movie_creation_outlined,
                 size: 50,
                 color: Color(0xFF00FFA3),
               ),
             ),
             const SizedBox(height: 22),
             const Text(
-              'Reels Cropper',
+              'Reels Cropper Pro',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 26,
@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Pro Multi-Ratio Video Editor',
+              'Multi-Track Video Studio & Trimmer',
               style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
             const SizedBox(height: 32),
@@ -173,7 +173,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   // Sticker Variables
   String _selectedEmoji = '';
-  Offset _emojiPosition = const Offset(140.0, 200.0);
+  Offset _emojiPosition = const Offset(140.0, 180.0);
 
   final List<String> _emojiList = [
     '🔥', '🚀', '💯', '✨', '💡', '🎬',
@@ -242,6 +242,12 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           ? _videoController!.pause()
           : _videoController!.play();
     });
+  }
+
+  void _seekRelative(int seconds) {
+    if (_videoController == null) return;
+    final target = _videoController!.value.position + Duration(seconds: seconds);
+    _videoController!.seekTo(target);
   }
 
   void _setPlaybackSpeed(double speed) {
@@ -574,7 +580,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Select Background Style',
+              'Select Canvas Background',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -637,7 +643,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
             return AlertDialog(
               backgroundColor: const Color(0xFF1E1E1E),
               title: const Text(
-                'Text & Watermark',
+                'Text & Subtitle',
                 style: TextStyle(
                     color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
               ),
@@ -651,7 +657,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       autofocus: true,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        hintText: 'Enter title or @name',
+                        hintText: 'Enter title or subtitle',
                         hintStyle: TextStyle(color: Colors.white38),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(color: Colors.white24),
@@ -753,6 +759,48 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     );
   }
 
+  void _showSpeedSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Playback Speed',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [0.5, 1.0, 1.5, 2.0].map((s) {
+                final isSelected = _currentSpeed == s;
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isSelected ? const Color(0xFF00FFA3) : Colors.white12,
+                    foregroundColor: isSelected ? Colors.black : Colors.white,
+                  ),
+                  onPressed: () {
+                    _setPlaybackSpeed(s);
+                    Navigator.pop(ctx);
+                  },
+                  child: Text('${s}x', style: const TextStyle(fontWeight: FontWeight.bold)),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
   String _formatDurationPrecise(double ms) {
     final duration = Duration(milliseconds: ms.toInt());
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -760,32 +808,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     final millis = ((duration.inMilliseconds % 1000) ~/ 100).toString();
     return '$minutes:$seconds.$millis';
-  }
-
-  Widget _buildSpeedChip(double speed) {
-    final bool isSelected = _currentSpeed == speed;
-    return Padding(
-      padding: const EdgeInsets.only(left: 4.0),
-      child: InkWell(
-        onTap: () => _setPlaybackSpeed(speed),
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF00FFA3) : Colors.white10,
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Text(
-            '${speed}x',
-            style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white70,
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _saveMedia() async {
@@ -798,7 +820,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Video saved to Gallery! 🎬'),
+              content: Text('Video exported to Gallery! 🎬'),
               backgroundColor: Colors.green,
             ),
           );
@@ -884,6 +906,88 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     return child;
   }
 
+  Widget _buildTimelineTrack({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isActive = false,
+  }) {
+    return Container(
+      height: 38,
+      margin: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, color: isActive ? const Color(0xFF00FFA3) : Colors.white60, size: 20),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                alignment: Alignment.centerLeft,
+                decoration: BoxDecoration(
+                  color: isActive ? const Color(0x3300FFA3) : const Color(0xFF1F1F1F),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: isActive ? const Color(0xFF00FFA3) : Colors.white12,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: isActive ? const Color(0xFF00FFA3) : Colors.white54,
+                    fontSize: 12,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color ?? Colors.white, size: 22),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color ?? Colors.white70,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double totalMs = _videoTotalDuration.inMilliseconds.toDouble();
@@ -892,253 +996,248 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     final Color selectedColor = _colorPalette[_colorIndex];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: const Color(0xFF0E0E0E),
       appBar: AppBar(
-        title: const Text('Reels Cropper',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.black,
-        centerTitle: false,
+        backgroundColor: const Color(0xFF141414),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+          onPressed: () {
+            if (_selectedFile != null) {
+              setState(() {
+                _videoController?.dispose();
+                _videoController = null;
+                _selectedFile = null;
+              });
+            }
+          },
+        ),
+        title: InkWell(
+          onTap: _showRatioSelector,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.aspect_ratio, size: 16, color: Color(0xFF00FFA3)),
+                const SizedBox(width: 6),
+                Text(
+                  _aspectRatioLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.white70),
+              ],
+            ),
+          ),
+        ),
+        centerTitle: true,
         actions: [
-          if (_selectedFile != null) ...[
-            TextButton.icon(
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white12,
-                foregroundColor: const Color(0xFF00FFA3),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              icon: const Icon(Icons.aspect_ratio_rounded, size: 18),
-              label: Text(_aspectRatioLabel,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              onPressed: _showRatioSelector,
+          IconButton(
+            icon: Icon(
+              _isFillMode ? Icons.fit_screen : Icons.crop_free,
+              color: const Color(0xFF00FFA3),
             ),
-            IconButton(
-              icon: const Icon(Icons.auto_awesome, color: Color(0xFF00FFA3)),
-              tooltip: 'Filters',
-              onPressed: _showFilterSelector,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.emoji_emotions_outlined,
-                color: _selectedEmoji.isNotEmpty
-                    ? const Color(0xFF00FFA3)
-                    : Colors.white70,
+            tooltip: _isFillMode ? 'Fit Video' : 'Fill Screen',
+            onPressed: () {
+              setState(() {
+                _isFillMode = !_isFillMode;
+              });
+            },
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00FFA3),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              tooltip: 'Add Sticker',
-              onPressed: _showEmojiSelector,
-            ),
-            IconButton(
-              icon: const Icon(Icons.palette_outlined, color: Color(0xFF00FFA3)),
-              tooltip: 'Background Styles',
-              onPressed: _showBackgroundSelector,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.text_fields_rounded,
-                color: _overlayText.isNotEmpty
-                    ? const Color(0xFF00FFA3)
-                    : Colors.white70,
+              onPressed: (_selectedFile != null && !_isSaving) ? _saveMedia : null,
+              icon: _isSaving
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                    )
+                  : const Icon(Icons.file_upload_outlined, size: 18),
+              label: Text(
+                _isSaving ? '...' : 'Export',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
-              tooltip: 'Add Text',
-              onPressed: _showTextInputDialog,
             ),
-            if (_isVideo && _videoController != null) ...[
-              IconButton(
-                icon: Icon(
-                  _currentVolume == 0.0
-                      ? Icons.volume_off
-                      : (_currentVolume > 1.0 ? Icons.volume_up : Icons.volume_down),
-                  color: _currentVolume == 0.0
-                      ? Colors.redAccent
-                      : const Color(0xFF00FFA3),
-                ),
-                tooltip: 'Audio Controls',
-                onPressed: _showVolumeDialog,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 4.0),
-                child: IconButton(
-                  icon: Icon(_isFillMode ? Icons.fit_screen : Icons.crop_free,
-                      color: const Color(0xFF00FFA3)),
-                  tooltip: _isFillMode ? 'Fit Video' : 'Fill Screen',
-                  onPressed: () {
-                    setState(() {
-                      _isFillMode = !_isFillMode;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ],
+          ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
+            // Center Preview Canvas
             Expanded(
+              flex: 4,
               child: Center(
                 child: _selectedFile == null
                     ? Container(
-                        width: 250,
-                        height: 250 * (16 / 9),
+                        margin: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white30, width: 2),
+                          color: const Color(0xFF181818),
                           borderRadius: BorderRadius.circular(16),
-                          color: Colors.white10,
+                          border: Border.all(color: Colors.white12),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.video_library_outlined,
-                                size: 55, color: Colors.white70),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white24,
-                                  foregroundColor: Colors.white),
-                              onPressed: () => _pickMedia(false),
-                              icon: const Icon(Icons.image),
-                              label: const Text('Select Photo'),
+                            const Icon(Icons.video_library_outlined, size: 50, color: Colors.white54),
+                            const SizedBox(height: 14),
+                            const Text(
+                              'Import video or photo to start editing',
+                              style: TextStyle(color: Colors.white54, fontSize: 13),
                             ),
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00FFA3),
-                                  foregroundColor: Colors.black),
-                              onPressed: () => _pickMedia(true),
-                              icon: const Icon(Icons.videocam),
-                              label: const Text('Select Video'),
+                            const SizedBox(height: 18),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.white,
+                                    side: const BorderSide(color: Colors.white24),
+                                  ),
+                                  onPressed: () => _pickMedia(false),
+                                  icon: const Icon(Icons.image),
+                                  label: const Text('Photo'),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF00FFA3),
+                                    foregroundColor: Colors.black,
+                                  ),
+                                  onPressed: () => _pickMedia(true),
+                                  icon: const Icon(Icons.videocam),
+                                  label: const Text('Video'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: RepaintBoundary(
-                          key: _cropKey,
-                          child: AspectRatio(
-                            aspectRatio: _aspectRatio,
-                            child: Container(
-                              decoration: _bgDecorations[_selectedBgIndex],
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  _isVideo
-                                      ? (_videoController != null &&
-                                              _videoController!.value.isInitialized
-                                          ? GestureDetector(
-                                              onTap: _togglePlayPause,
-                                              child: Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Center(
-                                                    child: _buildFilteredChild(
-                                                      FittedBox(
-                                                        fit: _isFillMode
-                                                            ? BoxFit.cover
-                                                            : BoxFit.contain,
-                                                        clipBehavior: Clip.hardEdge,
-                                                        child: SizedBox(
-                                                          width: _videoController!
-                                                              .value.size.width,
-                                                          height: _videoController!
-                                                              .value.size.height,
-                                                          child: VideoPlayer(
-                                                              _videoController!),
-                                                        ),
+                    : RepaintBoundary(
+                        key: _cropKey,
+                        child: AspectRatio(
+                          aspectRatio: _aspectRatio,
+                          child: Container(
+                            decoration: _bgDecorations[_selectedBgIndex],
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                _isVideo
+                                    ? (_videoController != null && _videoController!.value.isInitialized
+                                        ? GestureDetector(
+                                            onTap: _togglePlayPause,
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                Center(
+                                                  child: _buildFilteredChild(
+                                                    FittedBox(
+                                                      fit: _isFillMode ? BoxFit.cover : BoxFit.contain,
+                                                      clipBehavior: Clip.hardEdge,
+                                                      child: SizedBox(
+                                                        width: _videoController!.value.size.width,
+                                                        height: _videoController!.value.size.height,
+                                                        child: VideoPlayer(_videoController!),
                                                       ),
                                                     ),
                                                   ),
-                                                  if (!_videoController!
-                                                      .value.isPlaying)
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black54,
-                                                        borderRadius:
-                                                            BorderRadius.circular(30),
-                                                      ),
-                                                      padding:
-                                                          const EdgeInsets.all(12),
-                                                      child: const Icon(
-                                                        Icons.play_arrow,
-                                                        size: 40,
-                                                        color: Colors.white,
-                                                      ),
+                                                ),
+                                                if (!_videoController!.value.isPlaying)
+                                                  Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black54,
+                                                      borderRadius: BorderRadius.circular(30),
                                                     ),
-                                                ],
-                                              ),
-                                            )
-                                          : const Center(
-                                              child: CircularProgressIndicator()))
-                                      : InteractiveViewer(
-                                          clipBehavior: Clip.hardEdge,
-                                          boundaryMargin: const EdgeInsets.all(200),
-                                          minScale: 0.2,
-                                          maxScale: 5.0,
-                                          child: _buildFilteredChild(
-                                            Image.file(_selectedFile!,
-                                                fit: BoxFit.contain),
-                                          ),
-                                        ),
-
-                                  if (_overlayText.isNotEmpty)
-                                    Positioned(
-                                      left: _textPosition.dx,
-                                      top: _textPosition.dy,
-                                      child: GestureDetector(
-                                        onPanUpdate: (details) {
-                                          setState(() {
-                                            _textPosition += details.delta;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 14, vertical: 7),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black87,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(
-                                                color: selectedColor, width: 1.5),
-                                          ),
-                                          child: Text(
-                                            _overlayText,
-                                            style: TextStyle(
-                                              color: selectedColor,
-                                              fontSize: _textSize,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.5,
+                                                    padding: const EdgeInsets.all(12),
+                                                    child: const Icon(
+                                                      Icons.play_arrow,
+                                                      size: 38,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
-                                          ),
+                                          )
+                                        : const Center(child: CircularProgressIndicator()))
+                                    : InteractiveViewer(
+                                        clipBehavior: Clip.hardEdge,
+                                        boundaryMargin: const EdgeInsets.all(200),
+                                        minScale: 0.2,
+                                        maxScale: 5.0,
+                                        child: _buildFilteredChild(
+                                          Image.file(_selectedFile!, fit: BoxFit.contain),
                                         ),
                                       ),
-                                    ),
 
-                                  if (_selectedEmoji.isNotEmpty)
-                                    Positioned(
-                                      left: _emojiPosition.dx,
-                                      top: _emojiPosition.dy,
-                                      child: GestureDetector(
-                                        onPanUpdate: (details) {
-                                          setState(() {
-                                            _emojiPosition += details.delta;
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black38,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                                color: Colors.white24, width: 1),
-                                          ),
-                                          child: Text(
-                                            _selectedEmoji,
-                                            style: const TextStyle(fontSize: 34),
+                                if (_overlayText.isNotEmpty)
+                                  Positioned(
+                                    left: _textPosition.dx,
+                                    top: _textPosition.dy,
+                                    child: GestureDetector(
+                                      onPanUpdate: (details) {
+                                        setState(() {
+                                          _textPosition += details.delta;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black87,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: selectedColor, width: 1.5),
+                                        ),
+                                        child: Text(
+                                          _overlayText,
+                                          style: TextStyle(
+                                            color: selectedColor,
+                                            fontSize: _textSize,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+
+                                if (_selectedEmoji.isNotEmpty)
+                                  Positioned(
+                                    left: _emojiPosition.dx,
+                                    top: _emojiPosition.dy,
+                                    child: GestureDetector(
+                                      onPanUpdate: (details) {
+                                        setState(() {
+                                          _emojiPosition += details.delta;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black38,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: Colors.white24, width: 1),
+                                        ),
+                                        child: Text(_selectedEmoji, style: const TextStyle(fontSize: 32)),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ),
@@ -1146,185 +1245,221 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               ),
             ),
 
-            if (_isVideo &&
-                _videoController != null &&
-                _videoController!.value.isInitialized &&
-                totalMs > 0)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        InkWell(
-                          onTap: _togglePlayPause,
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00FFA3),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              _videoController!.value.isPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatDurationPrecise(currentPosMs),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            _buildSpeedChip(0.5),
-                            _buildSpeedChip(1.0),
-                            _buildSpeedChip(1.5),
-                            _buildSpeedChip(2.0),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 5,
-                        activeTrackColor: const Color(0xFF00FFA3),
-                        inactiveTrackColor: Colors.white12,
-                        rangeThumbShape:
-                            const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
-                        thumbColor: const Color(0xFF00FFA3),
-                        overlayColor: Colors.transparent,
-                      ),
-                      child: RangeSlider(
-                        values: _trimRange,
-                        min: 0.0,
-                        max: totalMs,
-                        onChanged: (RangeValues values) {
-                          setState(() {
-                            _trimRange = values;
-                          });
-                          _videoController!.seekTo(
-                              Duration(milliseconds: values.start.toInt()));
-                        },
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Start: ${_formatDurationPrecise(_trimRange.start)}',
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 11),
-                        ),
-                        Text(
-                          'Trimmed: ${_formatDurationPrecise(_trimRange.end - _trimRange.start)}',
-                          style: const TextStyle(
-                              color: Color(0xFF00FFA3),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600),
-                        ),
-                        Text(
-                          'End: ${_formatDurationPrecise(_trimRange.end)}',
-                          style: const TextStyle(
-                              color: Colors.redAccent, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            // Timeline Header Bar (Playhead Time, Play/Pause, Undo/Redo)
+            Container(
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              color: const Color(0xFF141414),
               child: Row(
                 children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white38),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.grey[900],
-                          builder: (ctx) => Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const Icon(Icons.photo,
-                                    color: Colors.white),
-                                title: const Text('Choose Photo',
-                                    style: TextStyle(color: Colors.white)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickMedia(false);
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.video_collection,
-                                    color: Color(0xFF00FFA3)),
-                                title: const Text('Choose Video',
-                                    style: TextStyle(color: Colors.white)),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  _pickMedia(true);
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.change_circle_outlined),
-                      label: const Text('Change'),
+                  Text(
+                    '${_formatDurationPrecise(currentPosMs)} / ${_formatDurationPrecise(totalMs)}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF00FFA3),
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.replay_5, color: Colors.white70, size: 20),
+                    onPressed: () => _seekRelative(-5),
+                  ),
+                  InkWell(
+                    onTap: _togglePlayPause,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00FFA3),
+                        shape: BoxShape.circle,
                       ),
-                      onPressed: (_selectedFile != null && !_isSaving)
-                          ? _saveMedia
-                          : null,
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.black))
-                          : const Icon(Icons.check_circle),
-                      label: Text(_isSaving ? 'Saving...' : 'Save $_aspectRatioLabel',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: Icon(
+                        (_videoController?.value.isPlaying ?? false) ? Icons.pause : Icons.play_arrow,
+                        color: Colors.black,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.forward_5, color: Colors.white70, size: 20),
+                    onPressed: () => _seekRelative(5),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.undo, color: Colors.white54, size: 18),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.redo, color: Colors.white54, size: 18),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+            ),
+
+            // CapCut Multi-Track Timeline Layers
+            Expanded(
+              flex: 3,
+              child: Stack(
+                children: [
+                  Container(
+                    color: const Color(0xFF161616),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // Track 1: Audio / Music Track
+                          _buildTimelineTrack(
+                            icon: Icons.music_note_rounded,
+                            title: _currentVolume == 0.0
+                                ? 'Audio Muted'
+                                : 'Audio: ${(_currentVolume * 100).toInt()}% (Tap to adjust)',
+                            isActive: _currentVolume > 0.0,
+                            onTap: _showVolumeDialog,
+                          ),
+
+                          // Track 2: Subtitle / Text Track
+                          _buildTimelineTrack(
+                            icon: Icons.subtitles_rounded,
+                            title: _overlayText.isEmpty ? 'Tap to add subtitle / text' : _overlayText,
+                            isActive: _overlayText.isNotEmpty,
+                            onTap: _showTextInputDialog,
+                          ),
+
+                          // Track 3: Sticker / Overlay Track
+                          _buildTimelineTrack(
+                            icon: Icons.layers_rounded,
+                            title: _selectedEmoji.isEmpty
+                                ? 'Tap to add sticker / overlay'
+                                : 'Sticker: $_selectedEmoji',
+                            isActive: _selectedEmoji.isNotEmpty,
+                            onTap: _showEmojiSelector,
+                          ),
+
+                          // Track 4: Main Video Clip Track (Yellow Border)
+                          Container(
+                            height: 48,
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF222222),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFFFD54F), width: 2),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black45,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Icon(Icons.videocam, color: Color(0xFFFFD54F), size: 20),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SliderTheme(
+                                    data: SliderTheme.of(context).copyWith(
+                                      trackHeight: 6,
+                                      activeTrackColor: const Color(0xFFFFD54F),
+                                      inactiveTrackColor: Colors.white12,
+                                      rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
+                                      thumbColor: Colors.white,
+                                      overlayColor: Colors.transparent,
+                                    ),
+                                    child: RangeSlider(
+                                      values: _trimRange,
+                                      min: 0.0,
+                                      max: totalMs > 0 ? totalMs : 1.0,
+                                      onChanged: (RangeValues values) {
+                                        setState(() {
+                                          _trimRange = values;
+                                        });
+                                        _videoController?.seekTo(
+                                          Duration(milliseconds: values.start.toInt()),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Center Playhead Indicator Line
+                  Align(
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 2,
+                      color: Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // CapCut Bottom Action Bar
+            Container(
+              height: 64,
+              color: const Color(0xFF121212),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildBottomActionButton(
+                      icon: Icons.content_cut_rounded,
+                      label: 'Split',
+                      color: const Color(0xFF00FFA3),
+                      onTap: () {
+                        if (_videoController != null) {
+                          final cur = _videoController!.value.position.inMilliseconds.toDouble();
+                          setState(() {
+                            _trimRange = RangeValues(cur, _trimRange.end);
+                          });
+                        }
+                      },
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.tune_rounded,
+                      label: 'Trim',
+                      onTap: () {},
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.speed_rounded,
+                      label: '${_currentSpeed}x',
+                      onTap: _showSpeedSelector,
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.volume_up_rounded,
+                      label: 'Volume',
+                      onTap: _showVolumeDialog,
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.auto_awesome,
+                      label: 'Filters',
+                      onTap: _showFilterSelector,
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.palette_outlined,
+                      label: 'Canvas BG',
+                      onTap: _showBackgroundSelector,
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.text_fields_rounded,
+                      label: 'Text',
+                      onTap: _showTextInputDialog,
+                    ),
+                    _buildBottomActionButton(
+                      icon: Icons.emoji_emotions_outlined,
+                      label: 'Stickers',
+                      onTap: _showEmojiSelector,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
