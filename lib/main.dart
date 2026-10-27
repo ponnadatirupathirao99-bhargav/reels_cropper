@@ -125,7 +125,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   Offset _textPosition = const Offset(20.0, 40.0);
   double _textSize = 20.0;
   int _colorIndex = 0;
-  int _fontStyleIndex = 0;
   bool _showTextBackground = true;
 
   final List<Color> _colorPalette = [
@@ -136,8 +135,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     Colors.orangeAccent,
     Colors.redAccent,
   ];
-
-  final List<String> _fontNames = ['Bold', 'Heavy', 'Italic', 'Light'];
 
   // Background Styles
   int _selectedBgIndex = 0;
@@ -204,7 +201,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         await controller.initialize();
         controller.setLooping(false);
 
-        final totalMs = controller.value.duration.inMilliseconds.toDouble();
+        final double totalMs = controller.value.duration.inMilliseconds.toDouble();
         setState(() {
           _selectedFile = File(picked.path);
           _isVideo = true;
@@ -212,7 +209,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           _currentVolume = 1.0;
           _currentSpeed = 1.0;
           _videoTotalDuration = controller.value.duration;
-          _trimRange = RangeValues(0.0, totalMs > 0 ? totalMs : 1.0);
+          _trimRange = RangeValues(0.0, totalMs > 0.0 ? totalMs : 1.0);
         });
 
         controller.setVolume(_currentVolume);
@@ -229,7 +226,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   void _videoListener() {
     if (!mounted || _videoController == null) return;
-    final currentMs = _videoController!.value.position.inMilliseconds.toDouble();
+    final double currentMs = _videoController!.value.position.inMilliseconds.toDouble();
 
     if (currentMs >= _trimRange.end) {
       _videoController!.seekTo(Duration(milliseconds: _trimRange.start.toInt()));
@@ -265,7 +262,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   void _handleTimelineScrub(DragUpdateDetails details) {
     if (_videoController == null || !_videoController!.value.isInitialized) return;
     final double totalMs = _videoTotalDuration.inMilliseconds.toDouble();
-    if (totalMs <= 0) return;
+    if (totalMs <= 0.0) return;
 
     final double deltaMs = -details.delta.dx * 40.0;
     final double currentMs = _videoController!.value.position.inMilliseconds.toDouble();
@@ -726,4 +723,68 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       setState(() {
                         _selectedBgIndex = index;
                       });
-                      Navigator.pop
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: _bgDecorations[index],
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFF00FFA3) : Colors.white24,
+                            width: isSelected ? 3 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: isSelected
+                            ? const Icon(Icons.check, color: Color(0xFF00FFA3), size: 20)
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTextInputDialog() {
+    final textController = TextEditingController(text: _overlayText);
+    double localSize = _textSize;
+    int localColorIndex = _colorIndex;
+    bool localBg = _showTextBackground;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1E1E),
+              title: const Text(
+                'Text Overlay',
+                style: TextStyle(
+                    color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: textController,
+                      autofocus: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Enter title or subtitle',
+                        hintStyle: TextStyle(color: Colors.white38),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.white24),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color:
