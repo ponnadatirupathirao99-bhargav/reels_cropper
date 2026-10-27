@@ -114,7 +114,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   final List<Color> _colorPalette = [
     Colors.white,
-    Color(0xFF00FFA3),
+    const Color(0xFF00FFA3),
     Colors.yellowAccent,
     Colors.cyanAccent,
     Colors.orangeAccent,
@@ -155,6 +155,15 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
       ),
     ),
+  ];
+
+  // Sticker / Emoji Variables
+  String _selectedEmoji = '';
+  Offset _emojiPosition = const Offset(140, 200);
+
+  final List<String> _emojiList = [
+    '🔥', '🚀', '💯', '✨', '💡', '🎬',
+    '❤️', '👏', '⚡', '👀', '🎯', '⭐'
   ];
 
   final ImagePicker _picker = ImagePicker();
@@ -230,6 +239,77 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
       _currentSpeed = speed;
       _videoController!.setPlaybackSpeed(speed);
     });
+  }
+
+  void _showEmojiSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E1E),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Choose Emoji Sticker',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_selectedEmoji.isNotEmpty)
+                  TextButton(
+                    onPressed: () {
+                      setState(() => _selectedEmoji = '');
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 6,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+              ),
+              itemCount: _emojiList.length,
+              itemBuilder: (context, index) {
+                final emoji = _emojiList[index];
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedEmoji = emoji;
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _showBackgroundSelector() {
@@ -531,7 +611,16 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         centerTitle: true,
         actions: [
           if (_selectedFile != null) ...[
-            // Background Theme / Colors Selector Button
+            // Emoji Sticker Button
+            IconButton(
+              icon: Icon(
+                Icons.emoji_emotions_outlined,
+                color: _selectedEmoji.isNotEmpty ? const Color(0xFF00FFA3) : Colors.white70,
+              ),
+              tooltip: 'Add Sticker',
+              onPressed: _showEmojiSelector,
+            ),
+            // Background Theme Button
             IconButton(
               icon: const Icon(Icons.palette_outlined, color: Color(0xFF00FFA3)),
               tooltip: 'Background Styles',
@@ -680,6 +769,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                               fit: BoxFit.contain),
                                         ),
 
+                                  // Draggable Custom Styled Text Layer
                                   if (_overlayText.isNotEmpty)
                                     Positioned(
                                       left: _textPosition.dx,
@@ -707,6 +797,33 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                                               fontWeight: FontWeight.bold,
                                               letterSpacing: 0.5,
                                             ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                  // Draggable Sticker / Emoji Layer
+                                  if (_selectedEmoji.isNotEmpty)
+                                    Positioned(
+                                      left: _emojiPosition.dx,
+                                      top: _emojiPosition.dy,
+                                      child: GestureDetector(
+                                        onPanUpdate: (details) {
+                                          setState(() {
+                                            _emojiPosition += details.delta;
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.black38,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                                color: Colors.white24, width: 1),
+                                          ),
+                                          child: Text(
+                                            _selectedEmoji,
+                                            style: const TextStyle(fontSize: 34),
                                           ),
                                         ),
                                       ),
