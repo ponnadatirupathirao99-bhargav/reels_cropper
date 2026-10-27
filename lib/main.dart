@@ -102,15 +102,11 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
   bool _isFillMode = false;
   bool _isMuted = false;
 
-  // Aspect Ratio Variables
+  // Aspect Ratio Settings
   double _aspectRatio = 9 / 16;
   String _aspectRatioLabel = '9:16';
-  final Map<String, double> _ratios = {
-    '9:16 (Reel)': 9 / 16,
-    '1:1 (Square)': 1 / 1,
-    '4:5 (Post)': 4 / 5,
-    '16:9 (Landscape)': 16 / 9,
-  };
+  final List<String> _ratioNames = ['9:16 (Reel)', '1:1 (Square)', '4:5 (Post)', '16:9 (Landscape)'];
+  final List<double> _ratioValues = [9 / 16, 1.0, 4 / 5, 16 / 9];
 
   RangeValues _trimRange = const RangeValues(0, 1);
   Duration _videoTotalDuration = Duration.zero;
@@ -124,7 +120,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
 
   final List<Color> _colorPalette = [
     Colors.white,
-    const Color(0xFF00FFA3),
+    Color(0xFF00FFA3),
     Colors.yellowAccent,
     Colors.cyanAccent,
     Colors.orangeAccent,
@@ -167,7 +163,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
     ),
   ];
 
-  // Sticker Variables
+  // Sticker / Emoji Variables
   String _selectedEmoji = '';
   Offset _emojiPosition = const Offset(140, 200);
 
@@ -273,32 +269,38 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               ),
             ),
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _ratios.entries.map((entry) {
-                final isSelected = _aspectRatio == entry.value;
-                return ChoiceChip(
-                  label: Text(entry.key),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFF00FFA3),
-                  backgroundColor: Colors.white10,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        _aspectRatio = entry.value;
-                        _aspectRatioLabel = entry.key.split(' ').first;
-                      });
-                      Navigator.pop(ctx);
-                    }
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(_ratioNames.length, (int index) {
+                final bool isSelected = _aspectRatio == _ratioValues[index];
+                final String label = _ratioNames[index].split(' ').first;
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _aspectRatio = _ratioValues[index];
+                      _aspectRatioLabel = label;
+                    });
+                    Navigator.pop(ctx);
                   },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFF00FFA3) : Colors.white10,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: isSelected ? Colors.black : Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 );
-              }).toList(),
+              }),
             ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -675,7 +677,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
         centerTitle: false,
         actions: [
           if (_selectedFile != null) ...[
-            // Aspect Ratio Switcher Button
             TextButton.icon(
               style: TextButton.styleFrom(
                 backgroundColor: Colors.white12,
@@ -686,7 +687,6 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               label: Text(_aspectRatioLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
               onPressed: _showRatioSelector,
             ),
-            // Emoji Sticker Button
             IconButton(
               icon: Icon(
                 Icons.emoji_emotions_outlined,
@@ -695,13 +695,11 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
               tooltip: 'Add Sticker',
               onPressed: _showEmojiSelector,
             ),
-            // Background Theme Button
             IconButton(
               icon: const Icon(Icons.palette_outlined, color: Color(0xFF00FFA3)),
               tooltip: 'Background Styles',
               onPressed: _showBackgroundSelector,
             ),
-            // Text Overlay Button
             IconButton(
               icon: Icon(
                 Icons.text_fields_rounded,
@@ -746,28 +744,4 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                         width: 250,
                         height: 250 * (16 / 9),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white30, width: 2),
-                          borderRadius: BorderRadius.circular(16),
-                          color: Colors.white10,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.video_library_outlined,
-                                size: 55, color: Colors.white70),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white24,
-                                  foregroundColor: Colors.white),
-                              onPressed: () => _pickMedia(false),
-                              icon: const Icon(Icons.image),
-                              label: const Text('Select Photo'),
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00FFA3),
-                                  foregroundColor: Colors.black),
-                              onPressed: () => _pickMedia(true),
-                              icon: const Icon(Icons.
+                          border: Border.all(color: Colors.white30, width
