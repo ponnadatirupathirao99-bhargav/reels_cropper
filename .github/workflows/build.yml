@@ -2,8 +2,7 @@ name: Build Flutter APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -16,26 +15,29 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
 
       - name: Setup Project and Dependencies
         run: |
-          cp lib/main.dart saved_main.dart
-          flutter create --org com.reels.cropper --platforms=android --overwrite .
-          flutter pub add image_picker gal path_provider video_player
-          cp saved_main.dart lib/main.dart
+          flutter clean
+          flutter pub get
+
+      - name: Analyze Project
+        run: flutter analyze
 
       - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
+        run: flutter build apk --release --verbose
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
+        if: success()
         with:
-          name: ReelsCropper-APK
+          name: reels-cropper-release
           path: build/app/outputs/flutter-apk/app-release.apk
