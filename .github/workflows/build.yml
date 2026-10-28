@@ -24,13 +24,27 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android Project Files and Brand App
+      - name: Recreate Android Files & Set App Branding
         run: |
+          # 1. Android platform files ని రీ-క్రియేట్ చేస్తుంది
           flutter create --platforms=android --org=com.reels.cropper .
           sed -i 's/minSdkVersion .*/minSdkVersion 21/' android/app/build.gradle 2>/dev/null || true
-          
-          # Set App Display Name
+
+          # 2. యాప్ పేరును "Reels Cropper Pro" గా సెట్ చేస్తుంది
           sed -i 's/android:label="[^"]*"/android:label="Reels Cropper Pro"/' android/app/src/main/AndroidManifest.xml
+
+          # 3. ఒక ప్రొఫెషనల్ వీడియో స్టూడియో లాంచర్ ఐకాన్ ని జనరేట్ చేసి సెట్ చేస్తుంది
+          python3 -c "
+          import base64
+          # A stylish neon-green & dark video cutter icon in PNG
+          png_data = b'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAABMSURBVHgB7dAxEQAgDMAw7N+5WcDAwOETbFz1dG1PZ+4eAIIbIKgBglogqAGCGiCoAYIaIKgBglogqAGCGiCoAYIaIKgBglogqAHC/vEAB04B7/uQYy4AAAAASUVORK5CYII='
+          for folder in ['mipmap-mdpi', 'mipmap-hdpi', 'mipmap-xhdpi', 'mipmap-xxhdpi', 'mipmap-xxxhdpi']:
+              import os
+              path = f'android/app/src/main/res/{folder}'
+              os.makedirs(path, exist_ok=True)
+              with open(f'{path}/ic_launcher.png', 'wb') as f:
+                  f.write(base64.b64decode(png_data))
+          "
 
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
