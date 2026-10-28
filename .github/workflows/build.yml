@@ -24,14 +24,14 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Recreate Android Files and Build APK
+      - name: Setup Android Project Files and Brand App
         run: |
-          # మిస్ అయిన android డైరెక్టరీని రీ-జనరేట్ చేస్తుంది
-          flutter create --platforms=android .
-          
-          # android/app/build.gradle లో minSdkVersion 21 ఉండేలా చూస్తుంది (వీడియో ప్లేయర్ కోసం)
+          flutter create --platforms=android --org=com.reels.cropper .
           sed -i 's/minSdkVersion .*/minSdkVersion 21/' android/app/build.gradle 2>/dev/null || true
           
+          # Set App Display Name
+          sed -i 's/android:label="[^"]*"/android:label="Reels Cropper Pro"/' android/app/src/main/AndroidManifest.xml
+
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
@@ -39,5 +39,5 @@ jobs:
         uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: reels-cropper-release
+          name: reels-cropper-pro-release
           path: build/app/outputs/flutter-apk/app-release.apk
