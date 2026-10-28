@@ -35,15 +35,19 @@ jobs:
           echo "Found project at: $PROJECT_DIR"
           cd "$PROJECT_DIR"
 
-          # Re-create missing android directory if absent
           if [ ! -d "android" ] || [ ! -f "android/app/build.gradle" ]; then
-            echo "Repairing and generating missing Android platform files..."
+            echo "Repairing Android platform files..."
             flutter create . --platforms=android --org=com.reels.cropper
           fi
 
           flutter pub get
-          flutter build apk --release --no-tree-shake-icons
-          
+
+          echo "=== RUNNING DART CODE ANALYSIS ==="
+          flutter analyze || true
+
+          echo "=== RUNNING FLUTTER BUILD WITH FULL VERBOSE ==="
+          flutter build apk --release --verbose
+
           APK_FILE=$(find build/app/outputs/flutter-apk/ -name "app-release.apk" | head -n 1)
           echo "BUILT_APK_PATH=${PROJECT_DIR}/${APK_FILE}" >> $GITHUB_ENV
 
