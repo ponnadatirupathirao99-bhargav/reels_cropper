@@ -24,11 +24,16 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Project and Dependencies
-        run: flutter pub get
-
-      - name: Build Release APK
-        run: flutter build apk --release --no-tree-shake-icons
+      - name: Recreate Android Files and Build APK
+        run: |
+          # మిస్ అయిన android డైరెక్టరీని రీ-జనరేట్ చేస్తుంది
+          flutter create --platforms=android .
+          
+          # android/app/build.gradle లో minSdkVersion 21 ఉండేలా చూస్తుంది (వీడియో ప్లేయర్ కోసం)
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/' android/app/build.gradle 2>/dev/null || true
+          
+          flutter pub get
+          flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
