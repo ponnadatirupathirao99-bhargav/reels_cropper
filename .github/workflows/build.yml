@@ -12,12 +12,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Inspect Repository Structure
-        run: |
-          echo "=== Repository Contents ==="
-          ls -la
-          find . -maxdepth 3 -not -path '*/.*'
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -30,7 +24,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Build Release APK
+      - name: Setup Android Project Files and Build APK
         run: |
           PUBSPEC_PATH=$(find . -name "pubspec.yaml" | head -n 1)
           if [ -z "$PUBSPEC_PATH" ]; then
@@ -40,10 +34,18 @@ jobs:
           PROJECT_DIR=$(dirname "$PUBSPEC_PATH")
           echo "Found project at: $PROJECT_DIR"
           cd "$PROJECT_DIR"
+
+          # Re-create missing android directory if absent
+          if [ ! -d "android" ] || [ ! -f "android/app/build.gradle" ]; then
+            echo "Repairing and generating missing Android platform files..."
+            flutter create . --platforms=android --org=com.reels.cropper
+          fi
+
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
-          APK_FILE=$(find . -name "app-release.apk" | head -n 1)
-          echo "BUILT_APK_PATH=${PROJECT_DIR}/${APK_FILE#./}" >> $GITHUB_ENV
+          
+          APK_FILE=$(find build/app/outputs/flutter-apk/ -name "app-release.apk" | head -n 1)
+          echo "BUILT_APK_PATH=${PROJECT_DIR}/${APK_FILE}" >> $GITHUB_ENV
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
