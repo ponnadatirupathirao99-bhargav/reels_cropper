@@ -24,36 +24,15 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Setup Android Project Files and Build APK
-        run: |
-          PUBSPEC_PATH=$(find . -name "pubspec.yaml" | head -n 1)
-          if [ -z "$PUBSPEC_PATH" ]; then
-            echo "ERROR: pubspec.yaml file not found in repository!"
-            exit 1
-          fi
-          PROJECT_DIR=$(dirname "$PUBSPEC_PATH")
-          echo "Found project at: $PROJECT_DIR"
-          cd "$PROJECT_DIR"
+      - name: Setup Project and Dependencies
+        run: flutter pub get
 
-          if [ ! -d "android" ] || [ ! -f "android/app/build.gradle" ]; then
-            echo "Repairing Android platform files..."
-            flutter create . --platforms=android --org=com.reels.cropper
-          fi
-
-          flutter pub get
-
-          echo "=== RUNNING DART CODE ANALYSIS ==="
-          flutter analyze || true
-
-          echo "=== RUNNING FLUTTER BUILD WITH FULL VERBOSE ==="
-          flutter build apk --release --verbose
-
-          APK_FILE=$(find build/app/outputs/flutter-apk/ -name "app-release.apk" | head -n 1)
-          echo "BUILT_APK_PATH=${PROJECT_DIR}/${APK_FILE}" >> $GITHUB_ENV
+      - name: Build Release APK
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: reels-cropper-release
-          path: ${{ env.BUILT_APK_PATH }}
+          path: build/app/outputs/flutter-apk/app-release.apk
