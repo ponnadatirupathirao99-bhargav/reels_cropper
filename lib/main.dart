@@ -25,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 1600), () {
+    Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -44,42 +44,35 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 90,
-              height: 90,
+              width: 84,
+              height: 84,
               decoration: BoxDecoration(
                 color: Colors.black,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(22),
                 border: Border.all(color: const Color(0xFF00FFA3), width: 2.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00FFA3).withOpacity(0.3),
-                    blurRadius: 25,
-                    spreadRadius: 2,
-                  ),
-                ],
               ),
               child: const Icon(
                 Icons.movie_creation_outlined,
-                size: 48,
+                size: 44,
                 color: Color(0xFF00FFA3),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             const Text(
               'Reels Cropper Pro',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
               ),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Pro Video Studio & Reels Trimmer',
+              'Video Studio & Trimmer',
               style: TextStyle(color: Colors.white54, fontSize: 13),
             ),
-            const SizedBox(height: 36),
+            const SizedBox(height: 30),
             const SizedBox(
               width: 22,
               height: 22,
@@ -257,44 +250,41 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Split Clip Options',
+              'Split Clip',
               style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-              'Current Playhead: ${_formatDurationPrecise(currentMs)}',
+              'Cut Position: ${_formatDurationPrecise(currentMs)}',
               style: const TextStyle(color: Color(0xFF00FFA3), fontSize: 13),
             ),
             const SizedBox(height: 18),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white12,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Keep Left'),
                     onPressed: () {
                       setState(() {
                         _trimRange = RangeValues(_trimRange.start, currentMs);
                       });
                       Navigator.pop(ctx);
                     },
+                    child: const Text('Keep Left'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF00FFA3),
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: const Icon(Icons.arrow_forward),
-                    label: const Text('Keep Right', style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: () {
                       setState(() {
                         _trimRange = RangeValues(currentMs, _trimRange.end);
@@ -302,6 +292,7 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
                       _videoController?.seekTo(Duration(milliseconds: currentMs.toInt()));
                       Navigator.pop(ctx);
                     },
+                    child: const Text('Keep Right', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -693,112 +684,3 @@ class _ReelsCropperScreenState extends State<ReelsCropperScreen> {
           },
         );
       },
-    );
-  }
-
-  void _showSpeedSelector() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E2028),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Speed Ramp', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [0.5, 1.0, 1.5, 2.0].map((s) {
-                final isSelected = _currentSpeed == s;
-                return ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isSelected ? const Color(0xFF00FFA3) : Colors.white12,
-                    foregroundColor: isSelected ? Colors.black : Colors.white,
-                  ),
-                  onPressed: () {
-                    _setPlaybackSpeed(s);
-                    Navigator.pop(ctx);
-                  },
-                  child: Text('${s}x', style: const TextStyle(fontWeight: FontWeight.bold)),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDurationPrecise(double ms) {
-    final duration = Duration(milliseconds: ms.toInt());
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    final millis = ((duration.inMilliseconds % 1000) ~/ 100).toString();
-    return '$minutes:$seconds.$millis';
-  }
-
-  Future<void> _saveMedia() async {
-    if (_selectedFile == null) return;
-    setState(() => _isSaving = true);
-
-    try {
-      if (_isVideo) {
-        await Gal.putVideo(_selectedFile!.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Video saved to Gallery successfully! 🎬'),
-              backgroundColor: Color(0xFF00C853),
-            ),
-          );
-        }
-      } else {
-        RenderRepaintBoundary boundary = _cropKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-        ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-        final pngBytes = byteData!.buffer.asUint8List();
-
-        final tempDir = await getTemporaryDirectory();
-        final file = await File('${tempDir.path}/crop_${DateTime.now().millisecondsSinceEpoch}.png').create();
-        await file.writeAsBytes(pngBytes);
-
-        await Gal.putImage(file.path);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Saved $_aspectRatioLabel Photo to Gallery! 🎉'),
-              backgroundColor: const Color(0xFF00C853),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export Failed: $e'), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.removeListener(_videoListener);
-    _videoController?.dispose();
-    super.dispose();
-  }
-
-  Widget _buildFilteredChild(Widget child) {
-    if (_selectedFilterIndex == 1) {
-      return ColorFiltered(
-        colorFilter: const ColorFilter.mode(Colors.grey, BlendMode.saturation),
-        child: child,
-      );
-    
